@@ -15,9 +15,7 @@ const COLORS = {
   ground: "#F3F1FB",
   card: "#FFFFFF",
   cardShadow: "0 8px 24px rgba(91, 76, 173, 0.08)",
-  grid: "#ECE9F9",rm -rf docs
-cp -r dist docsrm -rf docs
-cp -r dist docs
+  grid: "#ECE9F9",
   gridStrong: "#D8D3F3",
   curve: "#4C3A8A",
   ink: "#2B2540",
@@ -25,7 +23,7 @@ cp -r dist docs
   violet: "#7C5CFC",
   coral: "#FB8B6E",
   mint: "#2FC4A6",
-  gold: "#F5A623",
+  goldnpm run build && rm -rf docs && cp -r dist docs && git add docs/ && git commit -m "Fix corrupted code and rebuild" && git pushnpm run build && rm -rf docs && cp -r dist docs && git add docs/ && git commit -m "Fix corrupted code and rebuild" && git push "#F5A623",
   rose: "#EF6461",
   border: "#E7E3F6",
   chipBg: "#F7F5FD",
