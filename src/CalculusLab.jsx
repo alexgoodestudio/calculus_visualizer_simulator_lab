@@ -15,7 +15,9 @@ const COLORS = {
   ground: "#F3F1FB",
   card: "#FFFFFF",
   cardShadow: "0 8px 24px rgba(91, 76, 173, 0.08)",
-  grid: "#ECE9F9",
+  grid: "#ECE9F9",rm -rf docs
+cp -r dist docsrm -rf docs
+cp -r dist docs
   gridStrong: "#D8D3F3",
   curve: "#4C3A8A",
   ink: "#2B2540",
