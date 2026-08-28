@@ -23,7 +23,7 @@ const COLORS = {
   violet: "#7C5CFC",
   coral: "#FB8B6E",
   mint: "#2FC4A6",
-  goldnpm run build && rm -rf docs && cp -r dist docs && git add docs/ && git commit -m "Fix corrupted code and rebuild" && git pushnpm run build && rm -rf docs && cp -r dist docs && git add docs/ && git commit -m "Fix corrupted code and rebuild" && git push "#F5A623",
+  gold: "#F5A623",
   rose: "#EF6461",
   border: "#E7E3F6",
   chipBg: "#F7F5FD",
