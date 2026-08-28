@@ -10,6 +10,8 @@ jobs:
     
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       
       - uses: actions/setup-node@v4
         with:
@@ -21,14 +23,17 @@ jobs:
       - name: Build
         run: npm run build
       
-      - name: Deploy
+      - name: Deploy to gh-pages
         run: |
-          git config --global user.email "action@github.com"
-          git config --global user.name "GitHub Action"
-          git remote set-url origin https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}
-          git checkout --orphan gh-pages
-          git rm -rf .
-          cp -r dist/* .
+          mkdir -p gh-pages-temp
+          cd gh-pages-temp
+          git clone --depth 1 --branch gh-pages https://${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }} . 2>/dev/null || true
+          rm -rf *
+          cp -r ../dist/* .
+          git config user.email "action@github.com"
+          git config user.name "GitHub Action"
           git add .
-          git commit -m "Deploy: ${{ github.sha }}"
-          git push -f origin gh-pages
+          git commit --allow-empty -m "Deploy from ${{ github.sha }}"
+          git push https://${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }} gh-pages
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
