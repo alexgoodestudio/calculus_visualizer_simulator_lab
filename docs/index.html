@@ -2,13 +2,326 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/calculus_visualizer_simulator_lab/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>calc-app</title>
-    <script type="module" crossorigin src="/calculus_visualizer_simulator_lab/assets/index-diWYwJE2.js"></script>
-    <link rel="stylesheet" crossorigin href="/calculus_visualizer_simulator_lab/assets/index-nqMpL4T3.css">
+
+    <title>Calculus Lab — Interactive Derivative &amp; Integral Visualizer</title>
+    <meta
+      name="description"
+      content="A free interactive tool that shows how derivatives and integrals actually work. Watch the tangent line and slope graph move, see Riemann sums fill the area under a curve, and follow every problem worked out step by step — built for Calculus 1 students."
+    />
+    <meta
+      name="keywords"
+      content="derivative visualizer, integral visualizer, calculus 1, tangent line, slope, Riemann sum, definite integral, chain rule, product rule, quotient rule, power rule, fundamental theorem of calculus, interactive calculus, calculus animation"
+    />
+    <meta name="author" content="Alex Goode" />
+    <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1" />
+    <meta name="theme-color" content="#123A5E" />
+    <meta name="color-scheme" content="light" />
+
+    <link rel="canonical" href="https://alexgoodestudio.github.io/calculus_visualizer_simulator_lab/" />
+    <link rel="icon" type="image/svg+xml" href="/calculus_visualizer_simulator_lab/favicon.svg" />
+    <link rel="manifest" href="/calculus_visualizer_simulator_lab/site.webmanifest" />
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+
+    <!-- Open Graph -->
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="Calculus Lab" />
+    <meta property="og:title" content="Calculus Lab — See derivatives and integrals actually move" />
+    <meta
+      property="og:description"
+      content="A free interactive visualizer for Calculus 1: watch the tangent line and slope graph, see Riemann sums fill the area, and follow each problem worked out step by step."
+    />
+    <meta property="og:url" content="https://alexgoodestudio.github.io/calculus_visualizer_simulator_lab/" />
+    <meta property="og:image" content="https://alexgoodestudio.github.io/calculus_visualizer_simulator_lab/og.png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="Calculus Lab: a curve with a moving tangent line and shaded area beneath it." />
+    <meta property="og:locale" content="en_US" />
+
+    <!-- Twitter / X -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Calculus Lab — See derivatives and integrals actually move" />
+    <meta
+      name="twitter:description"
+      content="Free interactive Calculus 1 visualizer: moving tangent line, slope graph, Riemann sums, and step-by-step worked solutions."
+    />
+    <meta name="twitter:image" content="https://alexgoodestudio.github.io/calculus_visualizer_simulator_lab/og.png" />
+    <meta name="twitter:image:alt" content="Calculus Lab: a curve with a moving tangent line and shaded area beneath it." />
+
+    <!-- Structured data: the app -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": ["WebApplication", "LearningResource"],
+      "name": "Calculus Lab",
+      "alternateName": "Calculus Lab — Derivative & Integral Visualizer",
+      "url": "https://alexgoodestudio.github.io/calculus_visualizer_simulator_lab/",
+      "description": "A free, interactive visualizer for Calculus 1. It animates the tangent line and its slope graph to show what a derivative is, fills the area under a curve with Riemann sums to show what an integral is, and works every problem out step by step with the rule being used named at each step.",
+      "inLanguage": "en",
+      "isAccessibleForFree": true,
+      "applicationCategory": "EducationApplication",
+      "operatingSystem": "Any (web browser)",
+      "browserRequirements": "Requires JavaScript.",
+      "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
+      "author": {
+        "@type": "Person",
+        "name": "Alex Goode",
+        "url": "https://github.com/alexgoodestudio"
+      },
+      "learningResourceType": ["interactive simulation", "visualization", "worked example"],
+      "educationalLevel": "Beginner; introductory college calculus (Calculus 1 / AP Calculus AB)",
+      "educationalUse": ["self study", "instruction", "concept visualization"],
+      "audience": {
+        "@type": "EducationalAudience",
+        "educationalRole": "student"
+      },
+      "teaches": [
+        "derivative as the slope of a tangent line",
+        "the derivative as a function",
+        "power rule",
+        "product rule",
+        "quotient rule",
+        "chain rule",
+        "sum rule",
+        "definite integral as signed area",
+        "Riemann sums",
+        "antiderivatives",
+        "the Fundamental Theorem of Calculus"
+      ],
+      "featureList": [
+        "Animated tangent line with a rise-over-run slope triangle",
+        "The slope graph (f') drawn point by point as the tangent sweeps",
+        "Riemann sums that refine from coarse to fine, then fade into the exact area",
+        "Signed area shown in two colors (positive above the axis, negative below)",
+        "Every problem worked out by hand, step by step, with the rule named",
+        "An expandable toolbox of derivative and integral rules",
+        "Hover definitions of key calculus terms written for brand-new students",
+        "Ten preset functions plus any custom expression"
+      ]
+    }
+    </script>
+
+    <!-- Structured data: FAQ for answer engines -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "FAQPage",
+      "mainEntity": [
+        {
+          "@type": "Question",
+          "name": "What is a derivative?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "The derivative of a function is its instantaneous rate of change: the slope of the straight line that just touches the curve at a point (the tangent line). It is written f'(x) or dy/dx. Collect the slope at every x and those values form a new function, also called the derivative."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "What is an integral?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "A definite integral is the signed area between a curve and the x-axis over an interval: area above the axis counts as positive, area below counts as negative. An indefinite integral is the family of all antiderivatives of a function (functions whose derivative is that function), written with a '+ C'."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "What is the power rule?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "The power rule says the derivative of x raised to a power n is n times x to the power n minus 1: d/dx[x^n] = n·x^(n-1). For example, the derivative of x^3 is 3x^2."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "How do you take the derivative of a product like x·sin(x)?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Use the product rule: (A·B)' = A'·B + A·B'. For A = x and B = sin(x), we have A' = 1 and B' = cos(x), so the derivative is (1)·sin(x) + x·cos(x) = sin(x) + x·cos(x)."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "What is the chain rule?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "The chain rule handles a function nested inside another function. For f(g(x)), the derivative is f'(g(x))·g'(x): differentiate the outer function while leaving the inside alone, then multiply by the derivative of the inside. For example, d/dx[sin(x^2)] = cos(x^2)·2x."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "What is a Riemann sum?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "A Riemann sum estimates the area under a curve by slicing it into thin rectangles and adding their areas (each rectangle's height is the function value in that slice, times the slice width). As the rectangles get thinner and more numerous, the Riemann sum approaches the exact value of the definite integral."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "What is the Fundamental Theorem of Calculus?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "The Fundamental Theorem of Calculus connects derivatives and integrals. To evaluate a definite integral of f from a to b exactly, find an antiderivative F (a function whose derivative is f) and compute F(b) minus F(a)."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Is Calculus Lab free?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Yes. Calculus Lab is completely free, runs in any web browser, and requires no sign-up or download."
+          }
+        }
+      ]
+    }
+    </script>
+
+    <!-- Structured data: how to use it -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "HowTo",
+      "name": "How to use Calculus Lab to visualize a derivative or integral",
+      "totalTime": "PT2M",
+      "step": [
+        { "@type": "HowToStep", "position": 1, "name": "Pick Derivative or Integral", "text": "Use the two tabs in the navy bar to choose whether you're looking at the derivative (slope) or the integral (area)." },
+        { "@type": "HowToStep", "position": 2, "name": "Choose a function", "text": "Click a preset like x², sin(x), or x·sin(x), or type any expression into the f(x) box." },
+        { "@type": "HowToStep", "position": 3, "name": "Play the animation", "text": "Press Play to sweep the tangent line along the curve (or fill the area with columns). Scrub the slider to move to any point by hand." },
+        { "@type": "HowToStep", "position": 4, "name": "Read the walk-through", "text": "The right panel shows what you're finding, the full step-by-step solution by hand with each rule named, and how the current value maps onto the graph." },
+        { "@type": "HowToStep", "position": 5, "name": "Open the rules toolbox", "text": "Expand the derivative or integral rules reference at the bottom of the panel; the rules used in the current problem are flagged." }
+      ]
+    }
+    </script>
+    <script type="module" crossorigin src="/calculus_visualizer_simulator_lab/assets/index-B8-xYH7-.js"></script>
+    <link rel="stylesheet" crossorigin href="/calculus_visualizer_simulator_lab/assets/index-BCMcKL15.css">
   </head>
   <body>
     <div id="root"></div>
+
+    <noscript>
+      <div style="max-width:720px;margin:40px auto;padding:0 20px;font-family:system-ui,sans-serif;line-height:1.6;color:#1F2A37">
+        <h1>Calculus Lab — Derivative &amp; Integral Visualizer</h1>
+        <p>Calculus Lab is a free interactive tool for Calculus 1 students. It needs JavaScript to
+        run the animations. Please enable JavaScript, or read the overview below.</p>
+      </div>
+    </noscript>
+
+    <!-- Crawlable overview. The interactive app renders above this; this section
+         gives search engines and answer engines the plain-text context. -->
+    <section class="about" aria-label="About Calculus Lab">
+      <div class="about-inner">
+        <h2>What Calculus Lab is</h2>
+        <p>
+          Calculus Lab is a free, interactive visualizer for the two central ideas of
+          Calculus&nbsp;1: the <strong>derivative</strong> and the <strong>integral</strong>. It is
+          built for students who are seeing these concepts for the first time. Instead of a static
+          textbook figure, it animates the mechanism — the tangent line moving along a curve, its
+          slope being plotted as a second graph, rectangles filling the area under a curve — and
+          works every example out by hand, step by step, naming the rule used at each step.
+        </p>
+
+        <h2>How to use it</h2>
+        <ol>
+          <li>Choose <strong>Derivatives</strong> or <strong>Integrals</strong> in the navigation bar.</li>
+          <li>Pick a preset function (x², x³ − 3x, sin(x), cos(x), eˣ, ln(x), 1/x, x·sin(x), sin(x²), √x) or type your own.</li>
+          <li>Press <strong>Play</strong>, or scrub the slider to move through the animation by hand.</li>
+          <li>Follow the three-part walk-through on the right: <em>what you're finding</em>, <em>how to do it by hand</em>, and <em>how it maps onto the graph right now</em>.</li>
+          <li>Expand the <strong>rules toolbox</strong> for a quick reference to the power, product, quotient, chain, and sum rules (and their integral counterparts).</li>
+        </ol>
+
+        <h2>Common calculus questions</h2>
+
+        <h3>What is a derivative?</h3>
+        <p>
+          The derivative of a function is its instantaneous rate of change: the slope of the line
+          that just touches the curve at a single point (the tangent line). It is written
+          f&prime;(x) or dy/dx. The collection of those slopes, one for every x, is itself a
+          function — the derivative function.
+        </p>
+
+        <h3>What is an integral?</h3>
+        <p>
+          A definite integral is the signed area between a curve and the x-axis over an interval:
+          area above the axis counts as positive, area below counts as negative. An indefinite
+          integral is the family of all antiderivatives of a function.
+        </p>
+
+        <h3>What is the power rule?</h3>
+        <p>
+          The power rule: the derivative of x<sup>n</sup> is n·x<sup>n−1</sup>. Bring the exponent
+          down as a multiplier, then subtract one from the exponent. So the derivative of x³ is 3x².
+        </p>
+
+        <h3>How do you differentiate a product like x·sin(x)?</h3>
+        <p>
+          Use the product rule: (A·B)&prime; = A&prime;·B + A·B&prime;. With A = x (so A&prime; = 1)
+          and B = sin(x) (so B&prime; = cos(x)), the derivative is (1)·sin(x) + x·cos(x) =
+          sin(x) + x·cos(x).
+        </p>
+
+        <h3>What is the chain rule?</h3>
+        <p>
+          The chain rule handles a function nested inside another. For f(g(x)), the derivative is
+          f&prime;(g(x))·g&prime;(x): differentiate the outer function, leave the inside alone,
+          then multiply by the derivative of the inside. Example: d/dx[sin(x²)] = cos(x²)·2x.
+        </p>
+
+        <h3>What is a Riemann sum?</h3>
+        <p>
+          A Riemann sum estimates the area under a curve using thin rectangles. As the rectangles
+          get thinner and more numerous, the sum approaches the exact definite integral.
+        </p>
+
+        <h3>What is the Fundamental Theorem of Calculus?</h3>
+        <p>
+          It links differentiation and integration: to evaluate a definite integral of f from a to
+          b exactly, find an antiderivative F and compute F(b) − F(a).
+        </p>
+
+        <p class="about-foot">
+          Built by <a href="https://github.com/alexgoodestudio">Alex Goode</a> ·
+          <a href="https://github.com/alexgoodestudio/calculus_visualizer_simulator_lab">Source on GitHub</a>
+          · Free to use · Not a substitute for your textbook or instructor.
+        </p>
+      </div>
+    </section>
+
+    <style>
+      .about {
+        background: #123A5E;
+        color: #DCE7F0;
+        font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+        line-height: 1.6;
+      }
+      .about-inner {
+        max-width: 760px;
+        margin: 0 auto;
+        padding: 56px clamp(16px, 4vw, 48px) 72px;
+      }
+      .about h2 {
+        color: #fff;
+        font-size: 20px;
+        margin: 32px 0 10px;
+      }
+      .about h2:first-child { margin-top: 0; }
+      .about h3 {
+        color: #fff;
+        font-size: 15.5px;
+        margin: 22px 0 4px;
+      }
+      .about p, .about li { font-size: 14.5px; margin: 0 0 10px; }
+      .about ol { padding-left: 22px; }
+      .about li { margin-bottom: 6px; }
+      .about a { color: #8FC0EC; }
+      .about strong { color: #fff; }
+      .about-foot {
+        margin-top: 36px;
+        padding-top: 18px;
+        border-top: 1px solid rgba(255, 255, 255, 0.15);
+        font-size: 13px;
+        color: #A9BED0;
+      }
+    </style>
   </body>
 </html>

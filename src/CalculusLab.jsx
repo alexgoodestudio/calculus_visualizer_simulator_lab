@@ -12,21 +12,24 @@ import * as math from "mathjs";
    ----------------------------------------------------------------*/
 
 const COLORS = {
-  ground: "#F3F1FB",
+  ground: "#EDF1F5",
   card: "#FFFFFF",
-  cardShadow: "0 8px 24px rgba(91, 76, 173, 0.08)",
-  grid: "#ECE9F9",
-  gridStrong: "#D8D3F3",
-  curve: "#4C3A8A",
-  ink: "#2B2540",
-  inkDim: "#7A7595",
-  violet: "#7C5CFC",
-  coral: "#FB8B6E",
-  mint: "#2FC4A6",
-  gold: "#F5A623",
-  rose: "#EF6461",
-  border: "#E7E3F6",
-  chipBg: "#F7F5FD",
+  cardShadow: "0 6px 20px rgba(18, 58, 94, 0.08)",
+  grid: "#E7ECF1",
+  gridStrong: "#CBD6E0",
+  curve: "#123A5E",
+  ink: "#1F2A37",
+  inkDim: "#5B6B7B",
+  violet: "#1863B0",     // primary academic blue (name kept for reach)
+  navy: "#123A5E",       // top nav bar
+  navyDeep: "#0E2E49",
+  coral: "#E8683C",
+  mint: "#1EA085",
+  gold: "#E0952A",
+  blue: "#2E6FC7",
+  rose: "#D64550",
+  border: "#DCE3EA",
+  chipBg: "#F1F5F9",
 };
 
 const PRESETS = [
@@ -42,8 +45,8 @@ const PRESETS = [
   { label: "√x", expr: "sqrt(x)", domain: [0, 8] },
 ];
 
-const W = 640, H = 300;      // upper panel
-const H2 = 170;              // lower panel
+const W = 640, H = 232;      // upper panel
+const H2 = 140;              // lower panel
 const PAD = { l: 44, r: 18, t: 16, b: 26 };
 
 function sample(fn, xMin, xMax, n = 480) {
@@ -94,39 +97,527 @@ function fmt(n, digits = 3) {
   return Number(n.toPrecision(digits)).toString();
 }
 
-/* ---- rule detection heuristic, for the "key concept" callout ---- */
-function detectRule(expr) {
-  const e = expr.replace(/\s+/g, "");
-  const trig = /(sin|cos|tan)\(/;
-  const hasInnerExpr = (fnMatch) => {
-    const m = e.match(new RegExp(fnMatch.source + "\\(([^()]*x[^()]*)\\)"));
-    return m && m[1] !== "x";
+/* ============================================================
+   GLOSSARY — plain-language definitions for brand-new students.
+   Keys are matched (case-insensitively, whole word) inside the
+   prose and worked-solution copy and turned into hover chips.
+   ============================================================ */
+const GLOSSARY = {
+  "derivative": "How fast a function is changing at a single point. Zoom way in on the curve until it looks straight — the derivative is that little line's steepness.",
+  "tangent line": "A straight line that just grazes the curve at one point, pointing the same way the curve does there. Its slope is the derivative at that point.",
+  "secant line": "A straight line drawn through two points on the curve. Slide those two points together and the secant line becomes the tangent line.",
+  "slope": "How steep a line is — how far it rises (or drops) for every one step to the right. A slope of 2 means 'up 2 for every 1 across.'",
+  "rate of change": "How much one quantity changes when another changes. Slope and derivative are both rates of change.",
+  "instantaneous rate of change": "The rate of change at one exact instant, not averaged over a stretch — the speedometer reading, not the whole-trip average.",
+  "limit": "The value a function heads toward as its input creeps up on some number, even if it never lands exactly there.",
+  "continuous": "A curve you can draw without lifting your pen — no gaps, jumps, or holes.",
+  "power rule": "To differentiate x to a power: bring the power down in front as a multiplier, then lower the power by 1. So x⁴ becomes 4x³.",
+  "sum rule": "The derivative of terms added together is just the derivative of each term, added together. Work one term at a time.",
+  "constant rule": "The derivative of a plain number is 0 — a constant never changes, so its rate of change is nothing.",
+  "constant multiple rule": "A number multiplying a function comes along for the ride: differentiate the function and keep the number out front.",
+  "product rule": "For two functions multiplied together: (derivative of the first × the second) + (the first × derivative of the second).",
+  "quotient rule": "For one function divided by another: (bottom × derivative of top − top × derivative of bottom) ÷ bottom².",
+  "chain rule": "For a function nested inside another: differentiate the outside function (leaving the inside alone), then multiply by the derivative of the inside.",
+  "antiderivative": "A function whose derivative gives you back the one you started with. Integrating means running differentiation backwards to find it.",
+  "integral": "Adding up infinitely many infinitely thin pieces. A definite integral adds up thin slices of area under a curve.",
+  "definite integral": "The total signed area between a curve and the x-axis, measured between two x-values. Above the axis counts positive, below counts negative.",
+  "indefinite integral": "The whole family of antiderivatives of a function, written with '+ C' because adding any constant doesn't change the derivative.",
+  "Riemann sum": "An estimate of the area under a curve: slice it into thin rectangles, find each rectangle's area, and add them all up. Thinner slices, better estimate.",
+  "signed area": "Area that counts as positive above the x-axis and negative below it. The definite integral combines the pieces with their signs.",
+  "integrand": "The function being integrated — the f(x) sitting between the ∫ sign and the dx.",
+  "limits of integration": "The start and end x-values of a definite integral (the little numbers on the ∫ sign). They pick which slice of the curve you measure.",
+  "Fundamental Theorem of Calculus": "The bridge between the two halves of calculus: to get an exact definite integral, find an antiderivative F and compute F(end) − F(start).",
+  "reverse power rule": "The power rule run backwards: to integrate xⁿ, raise the power by 1 and divide by the new power. So x² integrates to x³/3.",
+  "trig integral": "The antiderivatives of the wave functions: ∫sin(x)dx = −cos(x), and ∫cos(x)dx = sin(x).",
+  "integral of eˣ": "eˣ is its own antiderivative: ∫eˣ dx = eˣ. It's the one function that never changes under calculus.",
+  "integral of 1/x": "∫(1/x)dx = ln|x|. This is the single exception to the reverse power rule (which would divide by zero here).",
+  "derivative of eˣ": "eˣ is its own derivative — its slope at every point equals its own height.",
+  "derivative of ln(x)": "The slope of ln(x) is 1/x, so the curve keeps flattening as x grows.",
+  "derivative of sin": "The slope of sin(x) at any point is cos(x).",
+  "derivative of cos": "The slope of cos(x) at any point is −sin(x).",
+  "derivative of tan": "The slope of tan(x) is sec(x)² = 1 / cos(x)².",
+};
+const GLOSSARY_KEYS = Object.keys(GLOSSARY).sort((a, b) => b.length - a.length);
+function escapeRegExp(s) { return s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"); }
+const GLOSSARY_RE = new RegExp("\\b(" + GLOSSARY_KEYS.map(escapeRegExp).join("|") + ")\\b", "gi");
+function canonicalKey(s) {
+  const low = s.toLowerCase();
+  return GLOSSARY_KEYS.find((k) => k.toLowerCase() === low) || null;
+}
+
+/* ============================================================
+   RULE TOOLBOX — an expandable reference. `key` is matched
+   (lowercased) against the rule names the worked solution emits,
+   so the rule in play gets flagged "used here".
+   ============================================================ */
+const DERIV_RULES = [
+  { key: "power rule", name: "Power Rule", formula: "d/dx[ xⁿ ] = n·xⁿ⁻¹", when: "f is x raised to a fixed power (includes √x = x^½).", example: "d/dx[ x³ ] = 3x²" },
+  { key: "constant multiple rule", name: "Constant Multiple", formula: "d/dx[ c·f ] = c·f′", when: "A plain number multiplies the function.", example: "d/dx[ 5x² ] = 10x" },
+  { key: "constant rule", name: "Constant Rule", formula: "d/dx[ c ] = 0", when: "The term is just a number — it never changes.", example: "d/dx[ 7 ] = 0" },
+  { key: "sum rule", name: "Sum Rule", formula: "d/dx[ f ± g ] = f′ ± g′", when: "Terms are added or subtracted — do each on its own.", example: "d/dx[ x² + x ] = 2x + 1" },
+  { key: "product rule", name: "Product Rule", formula: "d/dx[ f·g ] = f′·g + f·g′", when: "Two functions of x are multiplied together.", example: "d/dx[ x·sin x ] = sin x + x·cos x" },
+  { key: "quotient rule", name: "Quotient Rule", formula: "d/dx[ f/g ] = (f′·g − f·g′) / g²", when: "One function of x divided by another.", example: "d/dx[ x/(x+1) ] = 1/(x+1)²" },
+  { key: "chain rule", name: "Chain Rule", formula: "d/dx[ f(g(x)) ] = f′(g(x))·g′(x)", when: "A function sits inside another function.", example: "d/dx[ sin(x²) ] = cos(x²)·2x" },
+  { key: "derivative of sin", name: "sin & cos", formula: "d/dx[ sin x ] = cos x   ·   d/dx[ cos x ] = −sin x", when: "Differentiating the basic wave functions.", example: "d/dx[ cos x ] = −sin x" },
+  { key: "derivative of eˣ", name: "Exponential eˣ", formula: "d/dx[ eˣ ] = eˣ", when: "The natural exponential — slope equals height.", example: "d/dx[ eˣ ] = eˣ" },
+  { key: "derivative of ln(x)", name: "Logarithm ln x", formula: "d/dx[ ln x ] = 1/x", when: "The natural logarithm.", example: "d/dx[ ln x ] = 1/x" },
+];
+const INT_RULES = [
+  { key: "reverse power rule", name: "Reverse Power Rule", formula: "∫ xⁿ dx = xⁿ⁺¹/(n+1) + C   (n ≠ −1)", when: "Integrating x to a fixed power: raise the power, divide by it.", example: "∫ x² dx = x³/3 + C" },
+  { key: "constant multiple", name: "Constant Multiple", formula: "∫ c·f dx = c · ∫ f dx", when: "A plain number multiplies the integrand — pull it out front.", example: "∫ 6x² dx = 2x³ + C" },
+  { key: "sum rule", name: "Sum Rule", formula: "∫ (f ± g) dx = ∫ f dx ± ∫ g dx", when: "The integrand is a sum of terms — integrate each one.", example: "∫ (x² + 1) dx = x³/3 + x + C" },
+  { key: "integral of 1/x", name: "1/x", formula: "∫ (1/x) dx = ln|x| + C", when: "The one power the reverse power rule can't handle (n = −1).", example: "∫ (1/x) dx = ln|x| + C" },
+  { key: "trig integral", name: "sin & cos", formula: "∫ sin x dx = −cos x + C   ·   ∫ cos x dx = sin x + C", when: "Integrating the basic wave functions.", example: "∫ sin x dx = −cos x + C" },
+  { key: "integral of eˣ", name: "Exponential eˣ", formula: "∫ eˣ dx = eˣ + C", when: "The natural exponential is its own integral.", example: "∫ eˣ dx = eˣ + C" },
+  { key: "fundamental theorem of calculus", name: "Fundamental Theorem", formula: "∫ₐᵇ f dx = F(b) − F(a)", when: "Turning an antiderivative F into a definite (numeric) answer.", example: "∫₀¹ x² dx = ⅓ − 0 = ⅓" },
+  { key: "riemann sum", name: "Riemann Sum", formula: "∫ₐᵇ f dx ≈ Σ f(xᵢ)·Δx", when: "No elementary antiderivative — approximate with thin columns.", example: "more, thinner columns → closer to the exact area" },
+];
+
+/* ---- superscripts + friendlier symbols for rendered math ---- */
+const SUP = { "-": "⁻", 0: "⁰", 1: "¹", 2: "²", 3: "³", 4: "⁴", 5: "⁵", 6: "⁶", 7: "⁷", 8: "⁸", 9: "⁹" };
+function toSup(d) { return String(d).split("").map((c) => SUP[c] ?? c).join(""); }
+function prettyMath(s) {
+  return String(s)
+    .replace(/\s*\*\s*/g, "·")
+    .replace(/\s*\^\s*/g, "^")
+    .replace(/log\(abs\(([^()]+)\)\)/g, "ln|$1|")
+    .replace(/\blog\(/g, "ln(")
+    .replace(/\bexp\(/g, "e^(")
+    .replace(/\bsqrt\(/g, "√(")
+    .replace(/\bpi\b/g, "π")
+    .replace(/\^\((-?\d+)\)/g, (_, d) => toSup(d))
+    .replace(/\^(-?\d+)(?![\d./])/g, (_, d) => toSup(d))
+    .replace(/1 \/ 2 \/ √\(([^()]+)\)/g, "1 / (2√$1)")
+    .replace(/·\s*-\s*/g, "·−")
+    .replace(/(^|[\s(=/])-(?=[\d.a-zπ√(])/g, "$1−")
+    .replace(/ - /g, " − ")
+    // move a bare numeric coefficient in front of its variable: x²·3 / 2 → 3 / 2·x²
+    .replace(/([a-zπ√)\]²³¹⁰⁴⁵⁶⁷⁸⁹⁻]+)·(−?\d+(?:\s*\/\s*\d+)?)(?![\w(])/g, "$2·$1")
+    .replace(/\+ −/g, "− ")
+    .replace(/−\(([^()]+)\)/g, "−$1");
+}
+
+/* ---- tiny symbolic engine for the worked-solution panel ---- */
+function topLevelTerms(node) {
+  const terms = [];
+  const walk = (n, sign) => {
+    if (n.isParenthesisNode) return walk(n.content, sign);
+    if (n.isOperatorNode && (n.op === "+" || n.op === "-") && n.args.length === 2) {
+      walk(n.args[0], sign);
+      walk(n.args[1], n.op === "-" ? -sign : sign);
+      return;
+    }
+    if (n.isOperatorNode && n.op === "-" && n.args.length === 1) return walk(n.args[0], -sign);
+    terms.push({ sign, node: n });
   };
-  if (trig.test(e) && hasInnerExpr(trig)) {
+  walk(node, 1);
+  return terms;
+}
+function hasX(node) { return node.filter((n) => n.isSymbolNode && n.name === "x").length > 0; }
+function constVal(node) {
+  try {
+    if (hasX(node)) return null;
+    const v = node.compile().evaluate({});
+    return typeof v === "number" && Number.isFinite(v) ? v : null;
+  } catch { return null; }
+}
+function linearInner(node) {
+  try {
+    if (!hasX(node)) return null;
+    const k = constVal(math.derivative(node, "x"));
+    return k && Number.isFinite(k) ? { k } : null;
+  } catch { return null; }
+}
+function ruleForTerm(s) {
+  const e = s.replace(/\s+/g, "");
+  if (/(sin|cos|tan)\([^)]*[+\-*/^][^)]*\)/.test(e)) return "chain rule";
+  if (/\bexp\(/.test(e)) return "derivative of eˣ";
+  if (/\blog\(/.test(e)) return "derivative of ln(x)";
+  if (/\bsin\(/.test(e)) return "derivative of sin";
+  if (/\bcos\(/.test(e)) return "derivative of cos";
+  if (/\btan\(/.test(e)) return "derivative of tan";
+  if (/\bsqrt\(/.test(e)) return "power rule";
+  if ((e.match(/x/g) || []).length >= 2 && /\*/.test(e) && /\(/.test(e)) return "product rule";
+  if (/\//.test(e) && /x/.test(e.split("/")[1] || "")) return "quotient rule";
+  if (/\^/.test(e) || /x\*x/.test(e)) return "power rule";
+  if (/^[-+]?[0-9.]*\*?x$/.test(e)) return "constant multiple rule";
+  if (/^[-+]?[0-9.]+$/.test(e)) return "constant rule";
+  return "power rule";
+}
+function integralRuleName(node) {
+  const s = node.toString().replace(/\s+/g, "");
+  if (/\b(sin|cos|tan)\(/.test(s)) return "trig integral";
+  if (/\bexp\(/.test(s)) return "integral of eˣ";
+  if (/(^|[^\w])1\/x($|[^\w])/.test(s) || /x\^-1/.test(s)) return "integral of 1/x";
+  return "reverse power rule";
+}
+function antideriv(node) {
+  const c = constVal(node);
+  if (c !== null) return `(${c})*x`;
+  if (node.isParenthesisNode) return antideriv(node.content);
+  if (node.isSymbolNode && node.name === "x") return "x^2/2";
+  if (node.isOperatorNode) {
+    const { op, args } = node;
+    if ((op === "+" || op === "-") && args.length === 2)
+      return `(${antideriv(args[0])}) ${op} (${antideriv(args[1])})`;
+    if (op === "-" && args.length === 1) return `-(${antideriv(args[0])})`;
+    if (op === "*" && args.length === 2) {
+      const c0 = constVal(args[0]), c1 = constVal(args[1]);
+      if (c0 !== null) return `(${c0})*(${antideriv(args[1])})`;
+      if (c1 !== null) return `(${c1})*(${antideriv(args[0])})`;
+    }
+    if (op === "/" && args.length === 2) {
+      const c1 = constVal(args[1]);
+      if (c1 !== null) return `(${antideriv(args[0])})/(${c1})`;
+      const c0 = constVal(args[0]);
+      if (c0 !== null && args[1].isSymbolNode && args[1].name === "x") return `(${c0})*log(abs(x))`;
+    }
+    if (op === "^" && args.length === 2) {
+      const base = args[0], p = constVal(args[1]);
+      if (p !== null && base.isSymbolNode && base.name === "x") {
+        if (Math.abs(p + 1) < 1e-12) return "log(abs(x))";
+        return `x^(${p + 1})/(${p + 1})`;
+      }
+      const lin = linearInner(base);
+      if (p !== null && lin && Math.abs(p + 1) > 1e-12)
+        return `(${base})^(${p + 1})/((${p + 1})*(${lin.k}))`;
+    }
+  }
+  if (node.isFunctionNode) {
+    const fname = node.fn.name;
+    const u = node.args[0];
+    if (fname === "log" && u.isSymbolNode && u.name === "x") return "x*log(x) - x";
+    const lin = linearInner(u);
+    if (!lin) throw new Error("nonlinear inner");
+    const k = lin.k, uStr = u.toString();
+    if (fname === "sin") return `-cos(${uStr})/(${k})`;
+    if (fname === "cos") return `sin(${uStr})/(${k})`;
+    if (fname === "exp") return `exp(${uStr})/(${k})`;
+    if (fname === "sqrt") return `(2/3)*(${uStr})^(3/2)/(${k})`;
+    throw new Error("no rule for " + fname);
+  }
+  throw new Error("no antiderivative rule");
+}
+function numIntegral(node, lo, hi) {
+  try {
+    const f = node.compile();
+    const N = 2000, dx = (hi - lo) / N;
+    let acc = 0;
+    for (let i = 0; i < N; i++) {
+      const y = f.evaluate({ x: lo + dx * (i + 0.5) });
+      if (Number.isFinite(y)) acc += y * dx;
+    }
+    return acc;
+  } catch { return NaN; }
+}
+function simpStr(node) {
+  try { return math.simplify(node).toString({ parenthesis: "auto" }); }
+  catch { return node.toString({ parenthesis: "auto" }); }
+}
+function stripParen(n) { return n && n.isParenthesisNode ? stripParen(n.content) : n; }
+function dOf(node) {
+  try { return prettyMath(simpStr(math.derivative(node, "x"))); } catch { return "—"; }
+}
+
+const OUTER_LABEL = { sin: "sin( )", cos: "cos( )", tan: "tan( )", exp: "e^( )", log: "ln( )", sqrt: "√( )" };
+const OUTER_DERIV = {
+  sin: (u) => `cos(${u})`, cos: (u) => `−sin(${u})`, tan: (u) => `sec(${u})²`,
+  exp: (u) => `e^(${u})`, log: (u) => `1/(${u})`, sqrt: (u) => `1 / (2·√(${u}))`,
+};
+const BASIC_DERIV = {
+  "sin(x)": { text: "The derivative of sin(x) is cos(x). This is a memorized fact, not something you derive.", rule: "derivative of sin" },
+  "cos(x)": { text: "The derivative of cos(x) is −sin(x) — mind the minus sign. Another memorized fact.", rule: "derivative of cos" },
+  "tan(x)": { text: "The derivative of tan(x) is sec(x)², which is 1 ÷ cos(x)².", rule: "derivative of tan" },
+  "exp(x)": { text: "eˣ is its own derivative — the one function differentiation leaves unchanged.", rule: "derivative of eˣ" },
+  "e^x": { text: "eˣ is its own derivative — the one function differentiation leaves unchanged.", rule: "derivative of eˣ" },
+  "log(x)": { text: "The derivative of ln(x) is 1/x.", rule: "derivative of ln(x)" },
+};
+
+/* Ordered {text, math?, rule?} list that actually walks the work for a single
+   (non-additive) term, picked by the term's shape. */
+function derivativeSteps(t) {
+  t = stripParen(t);
+  const whole = () => { try { return prettyMath(simpStr(math.derivative(t, "x"))); } catch { return "—"; } };
+  const key = t.toString().replace(/\s+/g, "");
+
+  if (BASIC_DERIV[key]) return [
+    { text: BASIC_DERIV[key].text, rule: BASIC_DERIV[key].rule },
+    { text: "So the slope formula is:", math: whole() },
+  ];
+
+  if (key === "1/x") return [
+    { text: "First rewrite 1/x as x⁻¹ (x to the −1 power) so the power rule applies." },
+    { text: "Power Rule — a rule for derivatives: drop the exponent to the front, then lower it by 1.", math: "x⁻¹  →  −1·x⁻²  =  −1/x²", rule: "power rule" },
+  ];
+
+  if (t.isFunctionNode && t.fn.name === "sqrt" && stripParen(t.args[0]).isSymbolNode) return [
+    { text: "First rewrite √x as x^(1/2) — x to the one-half power." },
+    { text: "Power Rule: bring the 1/2 to the front, then lower the power by 1.", math: "½·x^(−½)  =  1 / (2√x)", rule: "power rule" },
+  ];
+
+  if ((t.isSymbolNode && t.name === "x") ||
+      (t.isOperatorNode && t.op === "^" && stripParen(t.args[0]).isSymbolNode && stripParen(t.args[0]).name === "x" && constVal(t.args[1]) !== null)) {
+    const n = t.isSymbolNode ? 1 : constVal(t.args[1]);
+    return [
+      { text: `${prettyMath(t.toString())} is x raised to a fixed power (n = ${n}).` },
+      { text: "Power Rule — a rule for derivatives: drop the exponent to the front as a multiplier, then subtract 1 from the exponent.", math: `${prettyMath(t.toString())}  →  ${whole()}`, rule: "power rule" },
+    ];
+  }
+
+  if (t.isOperatorNode && t.op === "*" && t.args.length === 2 &&
+      ((constVal(t.args[0]) !== null) !== (constVal(t.args[1]) !== null))) {
+    const cNode = constVal(t.args[0]) !== null ? t.args[0] : t.args[1];
+    const rest = constVal(t.args[0]) !== null ? t.args[1] : t.args[0];
+    return [
+      { text: `The number ${prettyMath(cNode.toString())} only scales the function — leave it out front (Constant Multiple Rule) and differentiate ${prettyMath(rest.toString())}.`, rule: "constant multiple rule" },
+      { text: `The derivative of ${prettyMath(rest.toString())} is ${dOf(rest)}, so altogether:`, math: whole() },
+    ];
+  }
+
+  if (t.isOperatorNode && t.op === "*" && t.args.length === 2 && hasX(t.args[0]) && hasX(t.args[1])) {
+    const A = t.args[0], B = t.args[1];
+    const As = prettyMath(A.toString()), Bs = prettyMath(B.toString());
+    return [
+      { text: `${prettyMath(t.toString())} is a product — two functions of x multiplied together: ${As} and ${Bs}.` },
+      { text: "A product is handled by the Product Rule, one of the rules for derivatives:", math: "(A · B)′  =  A′·B  +  A·B′", rule: "product rule" },
+      { text: "Differentiate each piece on its own:", math: `A = ${As}    A′ = ${dOf(A)}\nB = ${Bs}    B′ = ${dOf(B)}` },
+      { text: "Put those into the rule:", math: `(${dOf(A)})·${Bs}  +  ${As}·(${dOf(B)})` },
+      { text: "Clean it up:", math: whole() },
+    ];
+  }
+
+  if (t.isOperatorNode && t.op === "/" && t.args.length === 2 && hasX(t.args[1])) {
+    const A = t.args[0], B = t.args[1];
+    const As = prettyMath(A.toString()), Bs = prettyMath(B.toString());
+    return [
+      { text: `${prettyMath(t.toString())} is a quotient — ${As} divided by ${Bs}.` },
+      { text: "A quotient is handled by the Quotient Rule, one of the rules for derivatives:", math: "(A / B)′  =  (A′·B − A·B′) / B²", rule: "quotient rule" },
+      { text: "Differentiate top and bottom:", math: `A = ${As}    A′ = ${dOf(A)}\nB = ${Bs}    B′ = ${dOf(B)}` },
+      { text: "Put those into the rule:", math: `((${dOf(A)})·${Bs} − ${As}·(${dOf(B)})) / (${Bs})²` },
+      { text: "Clean it up:", math: whole() },
+    ];
+  }
+
+  if (t.isFunctionNode && t.args.length === 1) {
+    const inner = stripParen(t.args[0]);
+    if (!(inner.isSymbolNode && inner.name === "x")) {
+      const fn = t.fn.name;
+      const us = prettyMath(inner.toString());
+      const od = (OUTER_DERIV[fn] || ((u) => `${fn}′(${u})`))(us);
+      return [
+        { text: `${prettyMath(t.toString())} is a function inside a function — the outer function is ${OUTER_LABEL[fn] || fn + "( )"}, the inner function is ${us}.` },
+        { text: "Nested functions are handled by the Chain Rule, one of the rules for derivatives:", math: "( f(g(x)) )′  =  f′(g(x)) · g′(x)", rule: "chain rule" },
+        { text: "Differentiate the outer function (leave the inside as it is), then multiply by the derivative of the inside:", math: `${od}  ·  ${dOf(inner)}` },
+        { text: "Which multiplies out to:", math: whole() },
+      ];
+    }
+  }
+
+  return [{ text: "Differentiate directly:", math: whole() }];
+}
+
+function derivativeWork(exprInput) {
+  let node;
+  try { node = math.parse(exprInput); } catch { return null; }
+  let ans;
+  try { ans = prettyMath(simpStr(math.derivative(node, "x"))); } catch { return null; }
+  const terms = topLevelTerms(node);
+  let steps;
+  if (terms.length > 1) {
+    steps = [{ text: "f(x) is several pieces added or subtracted. The Sum Rule says: differentiate each piece on its own, then combine.", rule: "sum rule" }];
+    terms.forEach(({ sign, node: t }) => {
+      const label = (sign < 0 ? "− " : "") + prettyMath(t.toString());
+      let d;
+      try { d = prettyMath(simpStr(math.derivative(math.parse(`${sign < 0 ? "-" : ""}(${t.toString()})`), "x"))); }
+      catch { d = "—"; }
+      steps.push({ text: label, math: `d/dx[ ${label} ]  =  ${d}`, rule: ruleForTerm(t.toString()) });
+    });
+  } else {
+    steps = derivativeSteps(terms[0].node);
+  }
+  return {
+    mode: "derivative",
+    goal: `You're finding f′(x): a formula for the slope of f(x) = ${prettyMath(exprInput)}. Feed it any x and it returns how steep the curve is at that point.`,
+    steps,
+    answer: `f′(x)  =  ${ans}`,
+    graphLead: "Take the marker's x, drop it into the formula:",
+    ruleKeys: steps.filter((s) => s.rule).map((s) => s.rule),
+  };
+}
+
+function integralWork(exprInput, iA, iB) {
+  let node;
+  try { node = math.parse(exprInput); } catch { return null; }
+  const fpretty = prettyMath(exprInput);
+  const goal = `You're finding the definite integral: the exact area between f(x) = ${fpretty} and the x-axis, from x = ${fmt(iA)} to x = ${fmt(iB)}. Area below the axis counts as negative.`;
+  const convergeLead = "The running total on the lower graph converges to:";
+  const terms = topLevelTerms(node);
+  const parts = [];
+  const antiSteps = [];
+  let ok = true;
+  for (const { sign, node: t } of terms) {
+    try {
+      const F = antideriv(t);
+      const Fs = prettyMath(simpStr(math.parse(F)));
+      const term = (sign < 0 ? "− " : "") + prettyMath(t.toString());
+      antiSteps.push({ text: term, math: `∫ ${term} dx  =  ${sign < 0 ? "−(" + Fs + ")" : Fs}`, rule: integralRuleName(t) });
+      parts.push({ sign, F });
+    } catch { ok = false; break; }
+  }
+
+  if (!ok || !parts.length) {
     return {
-      name: "Chain Rule",
-      note: "There's a function tucked inside another function here. Work from the outside in: take the derivative of the outside piece, then multiply by the derivative of what's inside.",
+      mode: "integral", goal,
+      steps: [
+        { text: `${fpretty} has no antiderivative you can write with the basic rules.` },
+        { text: "So the area is found by approximation: slice it into thin columns and add them up — exactly what the animation does (a Riemann sum).", rule: "riemann sum" },
+      ],
+      answer: `area ≈ ${fmt(numIntegral(node, iA, iB), 5)}`,
+      graphLead: convergeLead,
+      ruleKeys: ["riemann sum"],
     };
   }
-  if (/x\)\*[a-z]+\(x|x\)\*x|x\*[a-z]+\(x\)/.test(e) || ((e.match(/x/g) || []).length >= 2 && /\*/.test(e) && /(sin|cos|tan|log|exp)\(/.test(e))) {
+
+  const Fexpr = parts.map((p, i) => `${i === 0 ? (p.sign < 0 ? "-" : "") : (p.sign < 0 ? "- " : "+ ")}(${p.F})`).join(" ");
+  let Fpretty, Fa, Fb, val;
+  try {
+    const Fnode = math.simplify(math.parse(Fexpr));
+    Fpretty = prettyMath(Fnode.toString({ parenthesis: "auto" }));
+    const Fc = Fnode.compile();
+    Fa = Fc.evaluate({ x: iA });
+    Fb = Fc.evaluate({ x: iB });
+    val = Fb - Fa;
+    if (![Fa, Fb, val].every(Number.isFinite)) throw new Error("nonfinite");
+  } catch {
     return {
-      name: "Product Rule",
-      note: "Two functions are being multiplied. Differentiate the first and keep the second, then add the first times the derivative of the second.",
+      mode: "integral", goal,
+      steps: [{ text: "The antiderivative blows up somewhere on this interval, so fall back to the column approximation.", rule: "riemann sum" }],
+      answer: `area ≈ ${fmt(numIntegral(node, iA, iB), 5)}`,
+      graphLead: convergeLead,
+      ruleKeys: ["riemann sum"],
     };
   }
-  if (/\//.test(e) && /x/.test(e.split("/")[1] || "")) {
-    return {
-      name: "Quotient Rule",
-      note: "This is one function divided by another. There's a specific formula for this case — it looks messier than the product rule because the bottom function's own change has to be accounted for too.",
-    };
+
+  const multi = terms.length > 1;
+  const steps = [
+    { text: "To get an exact area, first find an antiderivative F(x) — a function whose derivative is f(x). Reversing differentiation like this is the Fundamental Theorem of Calculus.", rule: "fundamental theorem of calculus" },
+  ];
+  if (multi) steps.push({ text: "Integrate each term separately (Sum Rule):", rule: "sum rule" });
+  antiSteps.forEach((s) => steps.push(s));
+  steps.push({ text: multi ? "Add the pieces:" : "So:", math: `F(x)  =  ${Fpretty}` });
+  const par = (v) => { const s = fmt(v, 4).replace(/-/g, "−"); return s.startsWith("−") ? `(${s})` : s; };
+  const mm = (v) => fmt(v).replace(/-/g, "−");
+  steps.push({ text: "Plug the two ends into F and subtract:", math: `F(${mm(iB)}) − F(${mm(iA)})  =  ${par(Fb)} − ${par(Fa)}` });
+
+  return {
+    mode: "integral",
+    goal,
+    steps,
+    answer: `∫  =  ${fmt(val, 4)}`,
+    graphLead: "The columns' running total on the lower graph lands on:",
+    ruleKeys: ["fundamental theorem of calculus", ...(multi ? ["sum rule"] : []), ...antiSteps.map((s) => s.rule).filter(Boolean)],
+  };
+}
+
+/* Wrap known calculus terms in the first place they appear with a hover chip. */
+function Glossed({ children }) {
+  if (typeof children !== "string") return <>{children}</>;
+  const out = [];
+  const seen = new Set();
+  let last = 0, m;
+  GLOSSARY_RE.lastIndex = 0;
+  while ((m = GLOSSARY_RE.exec(children)) !== null) {
+    const key = canonicalKey(m[1]);
+    if (m.index > last) out.push(children.slice(last, m.index));
+    if (key && !seen.has(key)) {
+      seen.add(key);
+      out.push(<Term key={m.index} name={key}>{m[0]}</Term>);
+    } else {
+      out.push(m[0]);
+    }
+    last = m.index + m[0].length;
   }
-  if (/exp\(/.test(e)) return { name: "Derivative of eˣ", note: "eˣ is a special function — its slope at every single point is equal to its own height. That's the one and only function that does this." };
-  if (/log\(/.test(e)) return { name: "Derivative of ln(x)", note: "The slope of ln(x) is always 1 divided by x. That means the curve gets flatter and flatter as x grows." };
-  if (/sin\(x\)/.test(e)) return { name: "Derivative of sin(x)", note: "The slope of sin(x) at any point is cos(x). As sine rises and falls, cosine tracks exactly how fast it's doing so." };
-  if (/cos\(x\)/.test(e)) return { name: "Derivative of cos(x)", note: "The slope of cos(x) at any point is −sin(x) — the negative sign flips the direction." };
-  if (/\^/.test(e) || /x\*x/.test(e)) return { name: "Power Rule", note: "For x raised to a power, bring the exponent down in front as a multiplier, then subtract 1 from the exponent. Example: the derivative of x³ is 3x²." };
-  if (/sqrt\(/.test(e)) return { name: "Power Rule", note: "√x is the same as x^(1/2), so the same rule applies: bring the 1/2 down, then subtract 1 from the exponent." };
-  return { name: "Sum Rule", note: "When a function is built from terms added or subtracted together, just take the derivative of each term separately." };
+  if (last < children.length) out.push(children.slice(last));
+  return <>{out}</>;
+}
+function Term({ name, children }) {
+  const def = GLOSSARY[name] || GLOSSARY[canonicalKey(name) || ""];
+  if (!def) return <>{children || name}</>;
+  return (
+    <span className="cl-term" tabIndex={0} role="button" aria-label={`${name}: ${def}`}>
+      {children || name}
+      <span className="cl-tip" role="tooltip">
+        <span className="cl-tip-term">{name}</span>
+        {def}
+      </span>
+    </span>
+  );
+}
+function RuleChip({ name }) {
+  const label = name.charAt(0).toUpperCase() + name.slice(1);
+  return (
+    <span style={styles.ruleChip}>
+      <span style={styles.ruleChipMark}>▸</span>
+      <Term name={name}>{label}</Term>
+    </span>
+  );
+}
+
+function WorkSteps({ steps }) {
+  return (
+    <ol style={styles.wSteps}>
+      {steps.map((s, i) => (
+        <li key={i} style={styles.wStep}>
+          <span style={styles.wStepNum}>{i + 1}</span>
+          <div style={styles.wStepText}><Glossed>{s.text}</Glossed></div>
+          {s.math && <div style={styles.wStepMath}>{s.math}</div>}
+          {s.rule && <RuleChip name={s.rule} />}
+        </li>
+      ))}
+    </ol>
+  );
+}
+
+function RulesToolbox({ mode, activeKeys }) {
+  const [open, setOpen] = useState(false);
+  const rules = mode === "derivative" ? DERIV_RULES : INT_RULES;
+  const used = rules.filter((r) => activeKeys.has(r.key));
+  return (
+    <div style={styles.toolbox}>
+      <button
+        className="cl-btn"
+        style={styles.toolboxHead}
+        onClick={() => setOpen((o) => !o)}
+        aria-expanded={open}
+      >
+        <span style={styles.toolboxChevron}>{open ? "▾" : "▸"}</span>
+        <span style={styles.toolboxTitle}>
+          {mode === "derivative" ? "Derivative rules" : "Integration rules"}
+        </span>
+        <span style={styles.toolboxUsing}>
+          {used.length ? `this problem uses: ${used.map((r) => r.name).join(", ")}` : "tap to open the reference"}
+        </span>
+      </button>
+      {open && (
+        <div style={styles.toolboxGrid}>
+          {rules.map((r) => {
+            const on = activeKeys.has(r.key);
+            return (
+              <div key={r.key} style={{ ...styles.ruleCard, ...(on ? styles.ruleCardOn : {}) }}>
+                <div style={styles.ruleCardTop}>
+                  <span style={styles.ruleName}>{r.name}</span>
+                  {on && <span style={styles.ruleBadge}>used here</span>}
+                </div>
+                <div style={styles.ruleFormula}>{r.formula}</div>
+                <div style={styles.ruleWhen}><b>When:</b> {r.when}</div>
+                <div style={styles.ruleEg}>{r.example}</div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
 }
 
 export default function CalculusLab() {
@@ -170,15 +661,15 @@ export default function CalculusLab() {
     }
   }, [exprInput]);
 
-  const rule = useMemo(() => detectRule(exprInput), [exprInput]);
 
   const [a, b] = domain;
-  const iA = a + (b - a) * 0.18;
-  const iB = b - (b - a) * 0.18;
+  // Integration runs across the full visible domain so the columns fill the graph.
+  const iA = a;
+  const iB = b;
 
   useEffect(() => {
     if (!playing) return;
-    const DURATION = 7000 / speed;
+    const DURATION = (mode === "integral" ? 4200 : 7000) / speed;
     startRef.current = null;
     const tick = (t) => {
       if (startRef.current === null) startRef.current = t;
@@ -194,7 +685,7 @@ export default function CalculusLab() {
     rafRef.current = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(rafRef.current);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [playing, speed]);
+  }, [playing, speed, mode]);
 
   const handlePlay = () => {
     if (progress >= 1) { setProgress(0); baseProgressRef.current = 0; }
@@ -220,8 +711,17 @@ export default function CalculusLab() {
   const derivPts = useMemo(() => (derivFn ? sample(derivFn, a, b) : []), [derivFn, a, b]);
   const [dyLo, dyHi] = useMemo(() => yExtent(derivPts), [derivPts]);
 
+  /* In integrate mode, always keep the x-axis (y = 0) inside the frame so
+     every column visibly sits on the axis and negative columns have room
+     to hang below it. */
+  const [vLo, vHi] = useMemo(() => {
+    if (mode !== "integral") return [yLo, yHi];
+    const span = yHi - yLo;
+    return [Math.min(yLo, 0) - (yLo > 0 ? span * 0.08 : 0), Math.max(yHi, 0) + (yHi < 0 ? span * 0.08 : 0)];
+  }, [mode, yLo, yHi]);
+
   const xToPx = useCallback((x) => PAD.l + ((x - a) / (b - a)) * (W - PAD.l - PAD.r), [a, b]);
-  const yToPx = useCallback((y) => H - PAD.b - ((y - yLo) / (yHi - yLo)) * (H - PAD.t - PAD.b), [yLo, yHi]);
+  const yToPx = useCallback((y) => H - PAD.b - ((y - vLo) / (vHi - vLo)) * (H - PAD.t - PAD.b), [vLo, vHi]);
   const yToPx2 = useCallback((y) => H2 - PAD.b - ((y - dyLo) / (dyHi - dyLo)) * (H2 - PAD.t - PAD.b), [dyLo, dyHi]);
 
   const mainPath = useMemo(() => pathFromPoints(curvePts, xToPx, yToPx), [curvePts, xToPx, yToPx]);
@@ -234,22 +734,48 @@ export default function CalculusLab() {
 
   const tangentPath = useMemo(() => {
     if (!Number.isFinite(cursorY) || !Number.isFinite(slope)) return "";
-    const halfSpan = (b - a) * 0.16;
+    const halfSpan = (b - a) * 0.2;
     const x1 = cursorX - halfSpan, x2 = cursorX + halfSpan;
     const y1 = cursorY - slope * halfSpan, y2 = cursorY + slope * halfSpan;
     return `M ${xToPx(x1)} ${yToPx(y1)} L ${xToPx(x2)} ${yToPx(y2)}`;
   }, [cursorX, cursorY, slope, a, b, xToPx, yToPx]);
 
+  /* rise-over-run wedge on the tangent — makes "slope" concrete */
+  const slopeRun = useMemo(() => {
+    if (!Number.isFinite(cursorY) || !Number.isFinite(slope)) return null;
+    const base = (b - a) * 0.1;
+    const dir = cursorX + base <= b ? 1 : -1;
+    const run = base * dir;
+    return { x0: cursorX, y0: cursorY, xr: cursorX + run, rise: slope * run, dir };
+  }, [cursorX, cursorY, slope, a, b]);
+
+  /* one-line story of what the tangent's tilt means right now */
+  const flatBand = (Math.abs(dyHi - dyLo) || 2) * 0.04;
+  const slopeStory = !Number.isFinite(slope)
+    ? null
+    : Math.abs(slope) <= flatBand
+      ? "▬  tangent is flat — f has leveled off, so f′(x) = 0"
+      : slope > 0
+        ? "▲  tangent tilts up — f is increasing, so f′(x) > 0"
+        : "▼  tangent tilts down — f is decreasing, so f′(x) < 0";
+
   const derivTracePts = useMemo(() => derivPts.filter((p) => p[0] <= cursorX), [derivPts, cursorX]);
   const derivTracePath = useMemo(() => pathFromPoints(derivTracePts, xToPx, yToPx2), [derivTracePts, xToPx, yToPx2]);
 
   /* ---------------- INTEGRAL MODE geometry ---------------- */
-  const stageBounds = [0.22, 0.44, 0.64, 0.82, 1.0];
-  const stageN = [8, 16, 32, 64, 128];
+  const stageBounds = [0.16, 0.32, 0.48, 0.64, 0.80, 1.0];
+  const stageN = [6, 12, 24, 48, 96, 160];
   let stageIdx = stageBounds.findIndex((s) => progress <= s);
   if (stageIdx === -1) stageIdx = stageBounds.length - 1;
   const n = stageN[stageIdx];
   const smooth = progress >= 1;
+  // Columns rise from the axis over the first third of each refinement stage.
+  const stageLo = stageIdx === 0 ? 0 : stageBounds[stageIdx - 1];
+  const stageProg = Math.min(1, Math.max(0, (progress - stageLo) / (stageBounds[stageIdx] - stageLo)));
+  const rawGrow = Math.min(1, stageProg / 0.34);
+  const colGrow = rawGrow >= 1 ? 1 : 1 - Math.pow(1 - rawGrow, 3);
+  // Crossfade the discrete columns into the smooth area over the last slice.
+  const smoothMix = progress <= 0.9 ? 0 : Math.min(1, (progress - 0.9) / 0.1);
 
   const rectangles = useMemo(() => {
     if (!fn) return [];
@@ -308,10 +834,23 @@ export default function CalculusLab() {
     return acc;
   }, [fn, iA, iB]);
 
-  /* ---------------- Insight panel copy (static prose + a fixed-slot readout) ---------------- */
-  const insight = useMemo(
-    () => buildInsight({ mode, rule, exprInput, derivStr, iA, iB }),
-    [mode, rule, exprInput, derivStr, iA, iB]
+  /* Symbolic worked solution — keyed only on the problem, not the animation
+     frame, so the steps are computed once and never churn while playing. */
+  const work = useMemo(() => {
+    try {
+      return mode === "derivative" ? derivativeWork(exprInput) : integralWork(exprInput, iA, iB);
+    } catch { return null; }
+  }, [mode, exprInput, iA, iB]);
+
+  /* The one live value the "on the graph" section reads out. */
+  const workLiveValue = mode === "derivative"
+    ? (Number.isFinite(cursorX) && Number.isFinite(slope) ? `f′(${fmt(cursorX)}) = ${fmt(slope)}` : "—")
+    : `${fmt(accumNow, 4)}`;
+
+  /* Which toolbox rules the current worked solution actually leans on. */
+  const activeRuleKeys = useMemo(
+    () => new Set((work?.ruleKeys ?? []).map((k) => k.toLowerCase())),
+    [work]
   );
 
   const stats = useMemo(() => {
@@ -323,9 +862,9 @@ export default function CalculusLab() {
       ];
     }
     return [
-      { label: "rectangles (n)", value: smooth ? "smooth" : String(n) },
-      { label: "estimate", value: smooth ? fmt(exactIntegral, 5) : fmt(riemannSum, 4) },
-      { label: "F(x) so far", value: fmt(accumNow, 4) },
+      { label: "columns", value: smooth ? "smooth" : String(n) },
+      { label: "area estimate", value: smooth ? fmt(exactIntegral, 5) : fmt(riemannSum, 4) },
+      { label: "area so far", value: fmt(accumNow, 4) },
     ];
   }, [mode, cursorX, cursorY, slope, n, smooth, riemannSum, exactIntegral, accumNow]);
 
@@ -348,8 +887,68 @@ export default function CalculusLab() {
           box-shadow: 0 2px 6px rgba(124,92,252,0.5);
         }
         .cl-stat-value { font-variant-numeric: tabular-nums; }
+
+        .cl-term {
+          position: relative;
+          color: ${COLORS.violet};
+          font-weight: 600;
+          border-bottom: 1.5px dotted ${COLORS.violet};
+          cursor: help;
+          outline: none;
+        }
+        .cl-tip {
+          position: absolute;
+          left: 50%;
+          top: calc(100% + 9px);
+          transform: translateX(-50%);
+          width: max-content;
+          max-width: 250px;
+          background: ${COLORS.ink};
+          color: #fff;
+          font-family: 'Inter', system-ui, sans-serif;
+          font-weight: 400;
+          font-size: 12px;
+          line-height: 1.5;
+          letter-spacing: 0;
+          text-align: left;
+          padding: 10px 12px;
+          border-radius: 10px;
+          box-shadow: 0 12px 30px rgba(43, 37, 64, 0.32);
+          opacity: 0;
+          visibility: hidden;
+          pointer-events: none;
+          z-index: 60;
+        }
+        .cl-tip::after {
+          content: "";
+          position: absolute;
+          bottom: 100%;
+          left: 50%;
+          transform: translateX(-50%);
+          border: 6px solid transparent;
+          border-bottom-color: ${COLORS.ink};
+        }
+        .cl-tip-term {
+          display: block;
+          font-family: 'Poppins', sans-serif;
+          font-weight: 700;
+          font-size: 11.5px;
+          color: ${COLORS.mint};
+          text-transform: capitalize;
+          margin-bottom: 3px;
+        }
+        .cl-term:hover .cl-tip,
+        .cl-term:focus .cl-tip,
+        .cl-term:focus-visible .cl-tip {
+          opacity: 1;
+          visibility: visible;
+          animation: fadeIn .16s ease;
+        }
+        .cl-term:focus-visible { border-bottom-style: solid; }
+
         @media (prefers-reduced-motion: reduce) {
           .cl-btn, .cl-chip { transition: none; }
+          .cl-term:hover .cl-tip, .cl-term:focus .cl-tip, .cl-term:focus-visible .cl-tip { animation: none; }
         }
         @media (max-width: 880px) {
           .cl-layout { grid-template-columns: 1fr !important; }
@@ -357,10 +956,38 @@ export default function CalculusLab() {
         }
       `}</style>
 
-      <header style={styles.header}>
-        <div style={styles.eyebrow}>LEARN DERIVATIVES &amp; INTEGRALS BY WATCHING THEM HAPPEN</div>
-        <h1 style={styles.h1}>Calculus Lab</h1>
-      </header>
+      {/* bar 1 — wordmark */}
+      <div style={styles.topbar}>
+        <div style={styles.bar}>
+          <span style={styles.brandMark}>∫ƒ′</span>
+          <span style={styles.brand}>Calculus Lab</span>
+          <span style={styles.brandDiv}>|</span>
+          <span style={styles.brandSub}>Derivatives &amp; Integrals, visualized</span>
+        </div>
+      </div>
+
+      {/* bar 2 — section nav */}
+      <nav style={styles.navbar}>
+        <div style={styles.bar}>
+          {["derivative", "integral"].map((m) => (
+            <button
+              key={m}
+              className="cl-tab"
+              onClick={() => setModeAndReset(m)}
+              style={{ ...styles.navLink, ...(mode === m ? styles.navLinkActive : {}) }}
+            >
+              {m === "derivative" ? "Derivatives" : "Integrals"}
+            </button>
+          ))}
+        </div>
+      </nav>
+
+      <main style={styles.page}>
+        <h1 style={styles.pageTitle}>
+          {mode === "derivative"
+            ? "Derivatives — the slope of a curve, point by point"
+            : "Integrals — the area between a curve and the axis"}
+        </h1>
 
       <div className="cl-layout" style={styles.layout}>
         {/* ---------------- LEFT: instrument ---------------- */}
@@ -376,21 +1003,10 @@ export default function CalculusLab() {
                 spellCheck={false}
               />
             </div>
-            <div style={styles.tabs}>
-              {["derivative", "integral"].map((m) => (
-                <button
-                  key={m}
-                  className="cl-tab"
-                  onClick={() => setModeAndReset(m)}
-                  style={{ ...styles.tab, ...(mode === m ? styles.tabActive : {}) }}
-                >
-                  {m === "derivative" ? "Differentiate" : "Integrate"}
-                </button>
-              ))}
-            </div>
           </div>
 
           <div style={styles.presetRow}>
+            <span style={styles.presetLabel}>Try a function:</span>
             {PRESETS.map((p) => (
               <button
                 key={p.label}
@@ -407,57 +1023,99 @@ export default function CalculusLab() {
 
           {/* upper plot */}
           <div style={styles.plotFrame}>
+            <div style={styles.plotTitle}>
+              {mode === "derivative"
+                ? <>Finding the <b style={styles.plotTitleWord}>derivative</b> of <span style={styles.plotTitleFn}>f(x) = {exprInput}</span></>
+                : <>Finding the <b style={styles.plotTitleWord}>integral</b> of <span style={styles.plotTitleFn}>f(x) = {exprInput}</span> from {fmt(iA)} to {fmt(iB)}</>}
+            </div>
             <svg viewBox={`0 0 ${W} ${H}`} style={styles.svg} role="img" aria-label="Function plot">
-              <Grid a={a} b={b} yLo={yLo} yHi={yHi} xToPx={xToPx} yToPx={yToPx} w={W} h={H} />
+              <Grid a={a} b={b} yLo={vLo} yHi={vHi} xToPx={xToPx} yToPx={yToPx} w={W} h={H} />
               <path d={mainPath} stroke={COLORS.curve} strokeWidth={2.5} fill="none" strokeLinecap="round" />
 
               {mode === "derivative" && fn && (
                 <>
+                  {/* shared x-guide: same x as the lower graph */}
+                  <line x1={xToPx(cursorX)} x2={xToPx(cursorX)} y1={PAD.t} y2={H - PAD.b}
+                    stroke={COLORS.violet} strokeWidth={1} strokeDasharray="2 4" opacity={0.32} />
                   <path d={tangentPath} stroke={COLORS.coral} strokeWidth={2.25} strokeLinecap="round" />
+                  {slopeRun && (
+                    <g>
+                      <line x1={xToPx(slopeRun.x0)} y1={yToPx(slopeRun.y0)} x2={xToPx(slopeRun.xr)} y2={yToPx(slopeRun.y0)}
+                        stroke={COLORS.coral} strokeWidth={1.5} strokeDasharray="4 3" />
+                      <line x1={xToPx(slopeRun.xr)} y1={yToPx(slopeRun.y0)} x2={xToPx(slopeRun.xr)} y2={yToPx(slopeRun.y0 + slopeRun.rise)}
+                        stroke={COLORS.coral} strokeWidth={1.5} strokeDasharray="4 3" />
+                      <text x={xToPx((slopeRun.x0 + slopeRun.xr) / 2)} y={yToPx(slopeRun.y0) + 11}
+                        fill={COLORS.coral} fontSize="8.5" textAnchor="middle" fontFamily="IBM Plex Mono, monospace">run</text>
+                      <text x={xToPx(slopeRun.xr) + slopeRun.dir * 4} y={yToPx(slopeRun.y0 + slopeRun.rise / 2)}
+                        fill={COLORS.coral} fontSize="8.5" textAnchor={slopeRun.dir > 0 ? "start" : "end"} fontFamily="IBM Plex Mono, monospace">rise</text>
+                    </g>
+                  )}
                   {Number.isFinite(cursorY) && (
-                    <circle cx={xToPx(cursorX)} cy={yToPx(cursorY)} r={5.5} fill={COLORS.coral} stroke="#fff" strokeWidth={2} />
+                    <>
+                      <circle cx={xToPx(cursorX)} cy={yToPx(cursorY)} r={5.5} fill={COLORS.coral} stroke="#fff" strokeWidth={2} />
+                      <text
+                        x={xToPx(cursorX) + (cursorX > a + (b - a) * 0.72 ? -9 : 9)}
+                        y={yToPx(cursorY) - 9}
+                        fill={COLORS.coral} fontSize="11" fontWeight="700" fontFamily="IBM Plex Mono, monospace"
+                        textAnchor={cursorX > a + (b - a) * 0.72 ? "end" : "start"}>
+                        slope = {fmt(slope)}
+                      </text>
+                    </>
                   )}
                 </>
               )}
 
               {mode === "integral" && fn && (
                 <>
-                  {!smooth ? (
-                    rectangles.map((r, i) => {
-                      const x0 = xToPx(r.x0), x1 = xToPx(r.x1);
-                      const yZero = yToPx(0);
-                      const top = r.h >= 0 ? yToPx(r.h) : yZero;
-                      const height = Math.abs(yToPx(0) - yToPx(r.h));
-                      return (
-                        <rect
-                          key={i}
-                          x={Math.min(x0, x1)}
-                          width={Math.max(1, Math.abs(x1 - x0) - 0.6)}
-                          y={top}
-                          height={Math.max(0.5, height)}
-                          fill={COLORS.mint}
-                          opacity={0.35}
-                          stroke={COLORS.mint}
-                          strokeWidth={0.75}
-                        />
-                      );
-                    })
-                  ) : (
+                  {smoothMix < 1 && rectangles.map((r, i) => {
+                    const x0 = xToPx(r.x0), x1 = xToPx(r.x1);
+                    const yZero = yToPx(0);
+                    const yTop = yZero + (yToPx(r.h) - yZero) * colGrow;
+                    const negative = r.h < 0;
+                    return (
+                      <rect
+                        key={i}
+                        x={Math.min(x0, x1)}
+                        width={Math.max(1, Math.abs(x1 - x0) - 0.6)}
+                        y={Math.min(yZero, yTop)}
+                        height={Math.max(0.5, Math.abs(yTop - yZero))}
+                        fill={negative ? COLORS.rose : COLORS.mint}
+                        opacity={0.42 * (1 - smoothMix)}
+                        stroke={negative ? COLORS.rose : COLORS.mint}
+                        strokeWidth={0.9}
+                      />
+                    );
+                  })}
+                  {smoothMix > 0 && areaSegments(sample(fn, iA, iB)).map((seg, i) => (
                     <path
-                      d={areaPath(sample(fn, iA, iB), xToPx, yToPx, yToPx(0))}
-                      fill={COLORS.mint}
-                      opacity={0.4}
+                      key={i}
+                      d={areaPath(seg.pts, xToPx, yToPx, yToPx(0))}
+                      fill={seg.sign < 0 ? COLORS.rose : COLORS.mint}
+                      opacity={0.42 * smoothMix}
                       stroke="none"
                     />
-                  )}
-                  <line x1={xToPx(iA)} x2={xToPx(iA)} y1={PAD.t} y2={H - PAD.b} stroke={COLORS.inkDim} strokeDasharray="3 3" opacity={0.5} />
-                  <line x1={xToPx(iB)} x2={xToPx(iB)} y1={PAD.t} y2={H - PAD.b} stroke={COLORS.inkDim} strokeDasharray="3 3" opacity={0.5} />
+                  ))}
+                  {/* baseline the columns rest on — makes signed area legible */}
+                  <line x1={xToPx(iA)} x2={xToPx(iB)} y1={yToPx(0)} y2={yToPx(0)} stroke={COLORS.ink} strokeWidth={1.5} opacity={0.55} />
                 </>
               )}
             </svg>
-            <div style={styles.plotCaption}>
-              {mode === "derivative" ? "f(x) with the tangent line sliding along the curve" : `Rectangles filling the area under f(x) from ${fmt(iA)} to ${fmt(iB)}`}
+            <div style={styles.legend}>
+              {mode === "derivative" ? (
+                <>
+                  <Dot c={COLORS.curve} /> f(x)
+                  <Dot c={COLORS.coral} /> tangent line — its tilt is the slope
+                </>
+              ) : (
+                <>
+                  <Dot c={COLORS.mint} /> area above axis (counts +)
+                  <Dot c={COLORS.rose} /> area below axis (counts −)
+                </>
+              )}
             </div>
+            {mode === "derivative" && slopeStory && (
+              <div style={styles.slopeStory}>{slopeStory}</div>
+            )}
           </div>
 
           {/* lower plot */}
@@ -466,10 +1124,20 @@ export default function CalculusLab() {
               {mode === "derivative" ? (
                 <>
                   <Grid a={a} b={b} yLo={dyLo} yHi={dyHi} xToPx={xToPx} yToPx={yToPx2} w={W} h={H2} />
+                  <line x1={xToPx(cursorX)} x2={xToPx(cursorX)} y1={PAD.t} y2={H2 - PAD.b}
+                    stroke={COLORS.violet} strokeWidth={1} strokeDasharray="2 4" opacity={0.32} />
                   <path d={derivPath} stroke={COLORS.border} strokeWidth={1.5} fill="none" opacity={0.7} />
                   <path d={derivTracePath} stroke={COLORS.mint} strokeWidth={2.5} fill="none" strokeLinecap="round" />
                   {Number.isFinite(slope) && (
-                    <circle cx={xToPx(cursorX)} cy={yToPx2(slope)} r={5} fill={COLORS.mint} stroke="#fff" strokeWidth={2} />
+                    <>
+                      <line x1={PAD.l} x2={xToPx(cursorX)} y1={yToPx2(slope)} y2={yToPx2(slope)}
+                        stroke={COLORS.mint} strokeWidth={1} strokeDasharray="3 3" opacity={0.6} />
+                      <circle cx={xToPx(cursorX)} cy={yToPx2(slope)} r={5} fill={COLORS.mint} stroke="#fff" strokeWidth={2} />
+                      <text x={PAD.l + 4} y={yToPx2(slope) - 4}
+                        fill={COLORS.mint} fontSize="9" fontWeight="700" fontFamily="IBM Plex Mono, monospace">
+                        {fmt(slope)}
+                      </text>
+                    </>
                   )}
                 </>
               ) : (
@@ -482,8 +1150,11 @@ export default function CalculusLab() {
                 </>
               )}
             </svg>
-            <div style={styles.plotCaption}>
-              {mode === "derivative" ? "f′(x) — each point here is a slope measured above" : "F(x) — the running total of area collected so far"}
+            <div style={styles.legend}>
+              <Dot c={COLORS.mint} />
+              {mode === "derivative"
+                ? "f′(x) — height here = the slope up top, at each x"
+                : "F(x) — height here = the area filled in so far, up to each x"}
             </div>
           </div>
 
@@ -512,31 +1183,63 @@ export default function CalculusLab() {
               ))}
             </div>
           </div>
+
         </div>
 
-        {/* ---------------- RIGHT: field notes ---------------- */}
+        {/* ---------------- RIGHT: the walk-through ---------------- */}
         <aside className="cl-notes" style={styles.notes}>
-          <div style={styles.notesEyebrow}>WHILE YOU WATCH</div>
+          {!work ? (
+            <div style={styles.workEmpty}>Type a valid function above to see it worked out.</div>
+          ) : (
+            <>
+              <section style={styles.sec}>
+                <h3 style={styles.secHead}>1 · What you're finding</h3>
+                <p style={styles.secBody}><Glossed>{work.goal}</Glossed></p>
+              </section>
 
-          <NoteBlock label="What's happening" tone="live">
-            <div>{insight.happening}</div>
-            <StatRow stats={stats} />
-          </NoteBlock>
+              <section style={styles.sec}>
+                <h3 style={styles.secHead}>2 · How to do it by hand</h3>
+                <WorkSteps steps={work.steps} />
+                <div style={styles.answer}>
+                  <span style={styles.answerTag}>answer</span>
+                  <span style={styles.answerMath}>{work.answer}</span>
+                </div>
+              </section>
 
-          <NoteBlock label="Key concept" tone="concept">
-            <div style={styles.conceptTitle}>{insight.conceptTitle}</div>
-            <div>{insight.conceptBody}</div>
-          </NoteBlock>
+              <section style={styles.sec}>
+                <h3 style={styles.secHead}>3 · On the graph right now</h3>
+                <StatRow stats={stats} />
+                <p style={styles.secBody}>
+                  {work.graphLead} <b style={styles.liveVal}>{workLiveValue}</b>
+                </p>
+                <p style={styles.secNote}>
+                  {mode === "derivative"
+                    ? "That number is the height of the dot on the lower graph, and the tilt of the tangent line up top."
+                    : "That's where the running-total trace on the lower graph ends up."}
+                </p>
+              </section>
 
-          <NoteBlock label="Definition" tone="def">
-            {insight.definition}
-          </NoteBlock>
-
-          <NoteBlock label="Right now, in numbers" tone="formula">
-            <div style={styles.mono}>{insight.formula}</div>
-          </NoteBlock>
+              <RulesToolbox mode={mode} activeKeys={activeRuleKeys} />
+            </>
+          )}
         </aside>
       </div>
+
+      <footer style={styles.footer}>
+        <span>Built by Alex Goode</span>
+        <span style={styles.footerDot}>·</span>
+        <a
+          href="https://github.com/alexgoodestudio/calculus_visualizer_simulator_lab"
+          target="_blank"
+          rel="noopener noreferrer"
+          style={styles.footerLink}
+        >
+          GitHub
+        </a>
+        <span style={styles.footerDot}>·</span>
+        <span>{new Date().getFullYear()}</span>
+      </footer>
+      </main>
     </div>
   );
 }
@@ -555,6 +1258,23 @@ function areaPath(pts, xToPx, yToPx, zeroPx) {
   for (const [x, y] of valid) d += ` L ${xToPx(x).toFixed(2)} ${yToPx(y).toFixed(2)}`;
   d += ` L ${xToPx(valid[valid.length - 1][0]).toFixed(2)} ${zeroPx.toFixed(2)} Z`;
   return d;
+}
+
+/* Split a sampled curve into runs of constant sign, so the filled area under
+   the curve can be drawn mint above the axis and rose below it. */
+function areaSegments(pts) {
+  const segs = [];
+  let cur = null;
+  for (const [x, y] of pts) {
+    if (!Number.isFinite(y)) { cur = null; continue; }
+    const sign = y >= 0 ? 1 : -1;
+    if (!cur || cur.sign !== sign) {
+      cur = { sign, pts: [] };
+      segs.push(cur);
+    }
+    cur.pts.push([x, y]);
+  }
+  return segs;
 }
 
 function Grid({ a, b, yLo, yHi, xToPx, yToPx, w, h }) {
@@ -591,6 +1311,10 @@ function niceTicks(lo, hi, count) {
   return ticks;
 }
 
+function Dot({ c }) {
+  return <span style={{ display: "inline-block", width: 8, height: 8, borderRadius: "50%", background: c, marginRight: 5, marginLeft: 2, flex: "0 0 auto" }} />;
+}
+
 /* Fixed-slot readout: labels never change, only the number in each slot does,
    so the surrounding paragraph never reflows while the animation runs. */
 function StatRow({ stats }) {
@@ -606,76 +1330,69 @@ function StatRow({ stats }) {
   );
 }
 
-function NoteBlock({ label, tone, children }) {
-  const accent = { live: COLORS.coral, concept: COLORS.violet, def: COLORS.inkDim, formula: COLORS.gold }[tone];
-  return (
-    <div style={{ ...styles.noteBlock, borderLeftColor: accent }}>
-      <div style={{ ...styles.noteLabel, color: accent }}>{label}</div>
-      <div style={styles.noteBody}>{children}</div>
-    </div>
-  );
-}
-
-/* Static prose only — no numbers baked in, so it never reflows mid-animation.
-   All the changing values live in the StatRow readout instead. */
-function buildInsight({ mode, rule, exprInput, derivStr, iA, iB }) {
-  if (mode === "derivative") {
-    return {
-      happening:
-        "Press play to slide a line along the curve that just barely touches it — that's the tangent line. As it moves, its steepness (the slope) becomes a new point on the graph below, which draws out the derivative.",
-      conceptTitle: rule.name,
-      conceptBody: rule.note,
-      definition:
-        "The derivative of a function at a point is the slope of the tangent line there. It tells you how fast f(x) is changing right at that instant — not on average, but at that exact spot.",
-      formula: `f(x) = ${exprInput}  →  f′(x) = ${derivStr || "…"}`,
-    };
-  }
-
-  return {
-    happening:
-      "Press play to fill the shaded region under the curve with thin rectangles. Watch the rectangle count grow — more, thinner rectangles hug the curve more closely, giving a better estimate of the true area.",
-    conceptTitle: "Riemann Sums & the Definite Integral",
-    conceptBody:
-      "Each rectangle's height is f evaluated somewhere in that slice, so its area (height × width) approximates a small piece of the region. Add every rectangle up and you get an estimate of the total area — that's a Riemann sum.",
-    definition:
-      "The definite integral ∫ f(x)dx over an interval is the exact area between the curve and the x-axis. As the rectangles get thinner and more numerous, the Riemann sum gets closer and closer to this exact value.",
-    formula: `∫ f(x) dx  over  [${fmt(iA)}, ${fmt(iB)}]`,
-  };
-}
-
 const styles = {
   app: {
     fontFamily: "'Inter', system-ui, sans-serif",
     background: COLORS.ground,
     color: COLORS.ink,
-    padding: "28px 28px 40px",
-    minHeight: "100%",
-    borderRadius: 20,
+    minHeight: "100vh",
+    textAlign: "left",
   },
-  header: { marginBottom: 20 },
-  eyebrow: {
+  topbar: {
+    background: COLORS.card,
+    borderBottom: `1px solid ${COLORS.border}`,
+  },
+  navbar: {
+    background: COLORS.navy,
+  },
+  bar: {
+    maxWidth: 1220,
+    margin: "0 auto",
+    padding: "0 clamp(16px, 4vw, 48px)",
+    display: "flex",
+    alignItems: "center",
+    gap: 12,
+  },
+  brandMark: {
     fontFamily: "'IBM Plex Mono', monospace",
-    fontSize: 11,
-    letterSpacing: "0.1em",
-    color: COLORS.violet,
-    marginBottom: 6,
-    fontWeight: 600,
+    fontSize: 18, fontWeight: 600, color: COLORS.violet,
+    padding: "12px 0",
   },
-  h1: {
-    fontFamily: "'Poppins', sans-serif",
-    fontWeight: 700,
-    fontSize: 30,
-    margin: 0,
-    letterSpacing: "-0.01em",
-    color: COLORS.ink,
+  brand: {
+    fontFamily: "'Poppins', sans-serif", fontWeight: 700, fontSize: 18,
+    color: COLORS.ink, letterSpacing: "-0.01em", padding: "12px 0",
+  },
+  brandDiv: { color: COLORS.border, fontSize: 18 },
+  brandSub: {
+    fontFamily: "'Inter', sans-serif", fontSize: 12.5, color: COLORS.inkDim,
+  },
+  navLink: {
+    background: "transparent", border: "none", cursor: "pointer",
+    fontFamily: "'Inter', sans-serif", fontWeight: 600, fontSize: 13.5,
+    color: "rgba(255,255,255,0.72)", padding: "13px 16px",
+    borderBottom: "3px solid transparent",
+  },
+  navLinkActive: {
+    color: "#fff", background: COLORS.navyDeep,
+    borderBottomColor: "#fff",
+  },
+  page: {
+    maxWidth: 1220, margin: "0 auto",
+    padding: "18px clamp(16px, 4vw, 48px) 56px",
+  },
+  pageTitle: {
+    fontFamily: "'Poppins', sans-serif", fontWeight: 600, fontSize: 24,
+    margin: "6px 0 20px", color: COLORS.ink, letterSpacing: "-0.01em",
+    lineHeight: 1.25,
   },
   layout: {
     display: "grid",
-    gridTemplateColumns: "minmax(0,1.55fr) minmax(260px,1fr)",
-    gap: 20,
+    gridTemplateColumns: "minmax(0, 720px) minmax(320px, 460px)",
+    gap: 24,
     alignItems: "start",
+    maxWidth: 1220,
   },
-  leftCol: { display: "flex", flexDirection: "column", gap: 12 },
+  leftCol: { display: "flex", flexDirection: "column", gap: 12, minWidth: 0 },
   controlRow: { display: "flex", gap: 12, flexWrap: "wrap", alignItems: "center" },
   fxWrap: {
     display: "flex", alignItems: "center", gap: 8,
@@ -691,12 +1408,15 @@ const styles = {
   },
   tabs: { display: "flex", gap: 6, background: COLORS.card, borderRadius: 12, padding: 4, border: `1px solid ${COLORS.border}`, boxShadow: COLORS.cardShadow },
   tab: {
+    display: "flex", flexDirection: "column", alignItems: "center", gap: 1,
     background: "transparent", border: "none", color: COLORS.inkDim,
     fontFamily: "'Poppins', sans-serif", fontWeight: 600, fontSize: 13,
-    padding: "7px 14px", borderRadius: 8, cursor: "pointer",
+    padding: "6px 16px", borderRadius: 8, cursor: "pointer", lineHeight: 1.15,
   },
+  tabSub: { fontFamily: "'Inter', sans-serif", fontWeight: 500, fontSize: 9.5, opacity: 0.75, textTransform: "lowercase" },
   tabActive: { background: COLORS.violet, color: "#fff" },
-  presetRow: { display: "flex", gap: 6, flexWrap: "wrap" },
+  presetRow: { display: "flex", gap: 6, flexWrap: "wrap", alignItems: "center" },
+  presetLabel: { fontFamily: "'Inter', sans-serif", fontSize: 12, color: COLORS.inkDim, marginRight: 2 },
   chip: {
     background: COLORS.card, border: `1px solid ${COLORS.border}`, color: COLORS.inkDim,
     borderRadius: 8, padding: "6px 11px", fontSize: 12.5,
@@ -712,9 +1432,35 @@ const styles = {
     padding: "12px 12px 8px", boxShadow: COLORS.cardShadow,
   },
   svg: { width: "100%", height: "auto", display: "block" },
+  plotTitle: {
+    fontFamily: "'Poppins', sans-serif", fontSize: 13, color: COLORS.inkDim,
+    marginBottom: 8, paddingLeft: 2, fontWeight: 500,
+  },
+  plotTitleWord: { color: COLORS.violet, fontWeight: 700 },
+  plotTitleFn: { fontFamily: "'IBM Plex Mono', monospace", color: COLORS.ink, fontWeight: 600 },
   plotCaption: {
     fontFamily: "'Inter', sans-serif", fontSize: 12, color: COLORS.inkDim,
     marginTop: 6, paddingLeft: 4,
+  },
+  legend: {
+    display: "flex", alignItems: "center", flexWrap: "wrap", gap: "2px 10px",
+    fontFamily: "'Inter', sans-serif", fontSize: 11.5, color: COLORS.inkDim,
+    marginTop: 7, paddingLeft: 2, lineHeight: 1.4,
+  },
+  slopeStory: {
+    marginTop: 6, marginLeft: 2, padding: "5px 9px", borderRadius: 8,
+    background: "#FFF1EC", color: "#B4502F", fontFamily: "'Inter', sans-serif",
+    fontSize: 12, fontWeight: 600, minHeight: 22,
+  },
+  bridge: {
+    display: "flex", alignItems: "flex-start", gap: 8,
+    background: "#EEF3FF", border: `1px solid ${COLORS.blue}`, borderRadius: 12,
+    padding: "10px 12px", fontFamily: "'Inter', sans-serif", fontSize: 12.5,
+    lineHeight: 1.45, color: COLORS.ink, fontWeight: 500,
+  },
+  bridgeArrow: {
+    fontFamily: "'IBM Plex Mono', monospace", fontSize: 16, color: COLORS.blue,
+    fontWeight: 700, lineHeight: 1,
   },
   transport: { display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap", marginTop: 4 },
   playBtn: {
@@ -734,6 +1480,40 @@ const styles = {
     borderRadius: 8, padding: "7px 10px", fontSize: 12, cursor: "pointer",
     fontFamily: "'IBM Plex Mono', monospace",
   },
+  toolbox: {
+    background: COLORS.card, border: `1px solid ${COLORS.border}`, borderRadius: 14,
+    boxShadow: COLORS.cardShadow, overflow: "hidden",
+  },
+  toolboxHead: {
+    display: "flex", alignItems: "baseline", gap: 8, width: "100%",
+    background: "transparent", border: "none", cursor: "pointer",
+    padding: "11px 14px", textAlign: "left", flexWrap: "wrap",
+  },
+  toolboxChevron: { color: COLORS.violet, fontSize: 11, fontWeight: 700 },
+  toolboxTitle: { fontFamily: "'Poppins', sans-serif", fontWeight: 700, fontSize: 13, color: COLORS.ink },
+  toolboxUsing: { fontFamily: "'Inter', sans-serif", fontSize: 11.5, color: COLORS.inkDim },
+  toolboxGrid: {
+    display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(210px, 1fr))",
+    gap: 8, padding: "2px 12px 12px",
+  },
+  ruleCard: {
+    border: `1px solid ${COLORS.border}`, borderRadius: 10, padding: "9px 11px",
+    background: COLORS.chipBg,
+  },
+  ruleCardOn: { borderColor: COLORS.violet, background: "#F3EEFF", boxShadow: `0 0 0 1px ${COLORS.violet}` },
+  ruleCardTop: { display: "flex", alignItems: "center", justifyContent: "space-between", gap: 6, marginBottom: 4 },
+  ruleName: { fontFamily: "'Poppins', sans-serif", fontWeight: 700, fontSize: 12.5, color: COLORS.ink },
+  ruleBadge: {
+    fontFamily: "'Inter', sans-serif", fontSize: 9, fontWeight: 700, letterSpacing: "0.04em",
+    textTransform: "uppercase", color: "#fff", background: COLORS.violet,
+    borderRadius: 5, padding: "2px 5px", whiteSpace: "nowrap",
+  },
+  ruleFormula: {
+    fontFamily: "'IBM Plex Mono', monospace", fontSize: 11.5, color: COLORS.curve,
+    lineHeight: 1.5, wordBreak: "break-word", marginBottom: 4,
+  },
+  ruleWhen: { fontFamily: "'Inter', sans-serif", fontSize: 11, color: COLORS.ink, lineHeight: 1.45, marginBottom: 3 },
+  ruleEg: { fontFamily: "'IBM Plex Mono', monospace", fontSize: 10.5, color: COLORS.inkDim, lineHeight: 1.4, wordBreak: "break-word" },
   notes: {
     background: COLORS.card, border: `1px solid ${COLORS.border}`, borderRadius: 18,
     padding: 18, display: "flex", flexDirection: "column", gap: 16,
@@ -758,4 +1538,79 @@ const styles = {
   },
   statLabel: { fontSize: 9.5, color: COLORS.inkDim, fontFamily: "'Inter', sans-serif", marginBottom: 2, whiteSpace: "nowrap" },
   statValue: { fontSize: 14, color: COLORS.ink, fontFamily: "'IBM Plex Mono', monospace", fontWeight: 600 },
+
+  sec: { display: "flex", flexDirection: "column", gap: 9 },
+  secHead: {
+    fontFamily: "'Poppins', sans-serif", fontWeight: 700, fontSize: 13.5,
+    color: COLORS.violet, margin: 0, letterSpacing: "-0.01em",
+  },
+  secBody: { fontSize: 13.5, lineHeight: 1.55, color: COLORS.ink, margin: 0 },
+  secNote: { fontSize: 12, lineHeight: 1.5, color: COLORS.inkDim, margin: 0 },
+  liveVal: { fontFamily: "'IBM Plex Mono', monospace", color: COLORS.coral, fontWeight: 700 },
+
+  wSteps: { listStyle: "none", margin: 0, padding: 0, display: "flex", flexDirection: "column", gap: 13 },
+  wStep: { position: "relative", paddingLeft: 26, fontSize: 13, lineHeight: 1.5 },
+  wStepNum: {
+    position: "absolute", left: 0, top: 1, width: 17, height: 17, borderRadius: "50%",
+    background: COLORS.violet, color: "#fff", fontSize: 10, fontWeight: 700,
+    fontFamily: "'Inter', sans-serif", display: "flex", alignItems: "center", justifyContent: "center",
+  },
+  wStepText: { color: COLORS.ink },
+  wStepMath: {
+    fontFamily: "'IBM Plex Mono', monospace", fontSize: 12.5, color: COLORS.curve,
+    background: COLORS.chipBg, border: `1px solid ${COLORS.border}`, borderRadius: 8,
+    padding: "6px 9px", marginTop: 5, whiteSpace: "pre-line", overflowX: "auto",
+  },
+  answer: {
+    display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap",
+    marginTop: 12, padding: "9px 12px", borderRadius: 10,
+    background: "#EEF3FF", border: `1px solid ${COLORS.blue}`,
+  },
+  answerTag: {
+    fontFamily: "'Inter', sans-serif", fontSize: 9.5, fontWeight: 700, letterSpacing: "0.06em",
+    textTransform: "uppercase", color: "#fff", background: COLORS.blue,
+    borderRadius: 5, padding: "2px 6px",
+  },
+  answerMath: { fontFamily: "'IBM Plex Mono', monospace", fontSize: 13.5, fontWeight: 700, color: COLORS.ink, wordBreak: "break-word" },
+  ruleChip: {
+    display: "inline-flex", alignItems: "center", gap: 3, marginTop: 6,
+    fontFamily: "'Inter', sans-serif", fontSize: 11, fontWeight: 600,
+  },
+  ruleChipMark: { color: COLORS.violet, fontSize: 9 },
+
+  work: { display: "flex", flexDirection: "column", gap: 8 },
+  workEmpty: { fontSize: 13, color: COLORS.inkDim, lineHeight: 1.55 },
+  workProblem: {
+    fontFamily: "'IBM Plex Mono', monospace", fontSize: 13, fontWeight: 600,
+    color: COLORS.ink, wordBreak: "break-word",
+  },
+  workApproach: { fontSize: 12.5, lineHeight: 1.55, color: COLORS.inkDim },
+  workSteps: {
+    listStyle: "decimal", paddingLeft: 18, margin: "2px 0",
+    display: "flex", flexDirection: "column", gap: 8,
+  },
+  workStep: { fontSize: 12.5, lineHeight: 1.5 },
+  workStepMath: { fontFamily: "'IBM Plex Mono', monospace", fontSize: 12.5, color: COLORS.ink, wordBreak: "break-word" },
+  workArrow: { color: COLORS.inkDim, margin: "0 5px" },
+  workStepRule: { fontSize: 10.5, color: COLORS.inkDim, marginTop: 2 },
+  workCombine: {
+    fontFamily: "'IBM Plex Mono', monospace", fontSize: 13, fontWeight: 600,
+    color: COLORS.blue, marginTop: 2, paddingTop: 7, borderTop: `1px solid ${COLORS.border}`,
+    wordBreak: "break-word",
+  },
+  workEval: { fontFamily: "'IBM Plex Mono', monospace", fontSize: 12.5, color: COLORS.ink, wordBreak: "break-word" },
+  workFallback: { fontSize: 12.5, lineHeight: 1.55, color: COLORS.inkDim },
+  workLive: {
+    fontFamily: "'IBM Plex Mono', monospace", fontSize: 11.5, color: COLORS.mint,
+    background: COLORS.chipBg, borderRadius: 8, padding: "6px 9px", marginTop: 2,
+    wordBreak: "break-word",
+  },
+
+  footer: {
+    marginTop: 40, paddingTop: 20, borderTop: `1px solid ${COLORS.border}`,
+    display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap",
+    fontFamily: "'Inter', sans-serif", fontSize: 12.5, color: COLORS.inkDim,
+  },
+  footerDot: { color: COLORS.border },
+  footerLink: { color: COLORS.violet, fontWeight: 600, textDecoration: "none" },
 };

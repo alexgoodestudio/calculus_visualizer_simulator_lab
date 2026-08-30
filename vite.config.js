@@ -5,4 +5,9 @@ import { defineConfig } from 'vite'
 export default defineConfig({
   plugins: [react()],
   base: '/calculus_visualizer_simulator_lab/',
+  // GitHub Pages serves from /docs on the main branch
+  build: {
+    outDir: 'docs',
+    emptyOutDir: true,
+  },
 })

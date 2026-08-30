@@ -1,0 +1,16 @@
+{
+  "name": "Calculus Lab — Derivative & Integral Visualizer",
+  "short_name": "Calculus Lab",
+  "description": "Interactive tool that shows how derivatives and integrals work, with every problem worked out step by step.",
+  "start_url": "/calculus_visualizer_simulator_lab/",
+  "scope": "/calculus_visualizer_simulator_lab/",
+  "display": "standalone",
+  "orientation": "landscape",
+  "background_color": "#EDF1F5",
+  "theme_color": "#123A5E",
+  "categories": ["education", "productivity", "utilities"],
+  "icons": [
+    { "src": "/calculus_visualizer_simulator_lab/favicon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" },
+    { "src": "/calculus_visualizer_simulator_lab/og.png", "sizes": "1200x630", "type": "image/png" }
+  ]
+}

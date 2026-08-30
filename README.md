@@ -1,6 +1,11 @@
-# Calculus Lab
+# Calculus Lab — Interactive Derivative & Integral Visualizer
 
-An interactive visualization tool for understanding derivatives and integrals in real time. Built with React, because sometimes you need to *see* math to understand it.
+**Live:** https://alexgoodestudio.github.io/calculus_visualizer_simulator_lab/
+
+A free, interactive visualization tool for understanding derivatives and integrals in real time —
+built for Calculus 1 students. Watch the tangent line and its slope graph move, see Riemann sums
+fill the area under a curve, and follow every problem worked out step by step with the rule named
+at each step. Built with React, because sometimes you need to *see* math to understand it.
 
 ## Why This Exists
 
