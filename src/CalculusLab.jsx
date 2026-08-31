@@ -449,7 +449,34 @@ function integralWork(exprInput, iA, iB) {
   let node;
   try { node = math.parse(exprInput); } catch { return null; }
   const fpretty = prettyMath(exprInput);
-  const goal = `You're finding the definite integral: the exact area between f(x) = ${fpretty} and the x-axis, from x = ${fmt(iA)} to x = ${fmt(iB)}. Area below the axis counts as negative.`;
+
+  // Does the curve sit above the axis, below it, or cross? Drives the green/red wording.
+  let sawPos = false, sawNeg = false, unsigned = 0;
+  try {
+    const f = node.compile();
+    const N = 400, dx = (iB - iA) / N;
+    for (let i = 0; i < N; i++) {
+      const y = f.evaluate({ x: iA + dx * (i + 0.5) });
+      if (Number.isFinite(y)) {
+        if (y > 1e-9) sawPos = true;
+        if (y < -1e-9) sawNeg = true;
+        unsigned += Math.abs(y) * dx;
+      }
+    }
+  } catch { /* leave flags false */ }
+  const crosses = sawPos && sawNeg;
+
+  const goal = `You're finding the definite integral: the exact signed area between f(x) = ${fpretty} and the x-axis, from x = ${fmt(iA)} to x = ${fmt(iB)}.`;
+  const signNote = crosses
+    ? "The graph shades it two colors: green where the curve is above the axis (that area counts +) and red where it's below (counts −). The integral is the green area minus the red area — both get measured."
+    : sawNeg
+      ? "Here the curve stays below the axis the whole interval, so every shaded piece is red and the integral comes out negative."
+      : "Here the curve stays above the axis the whole way, so it's all green and every piece counts +.";
+  const graphNote = crosses
+    ? "The running total climbs through the green stretches and falls back through the red ones — where it lands is the integral."
+    : sawNeg
+      ? "The running total only ever falls, since every slice of area is negative."
+      : "The running total only ever climbs, since every slice of area is positive.";
   const convergeLead = "The running total on the lower graph converges to:";
   const terms = topLevelTerms(node);
   const parts = [];
@@ -467,10 +494,11 @@ function integralWork(exprInput, iA, iB) {
 
   if (!ok || !parts.length) {
     return {
-      mode: "integral", goal,
+      mode: "integral", goal, signNote, graphNote,
       steps: [
         { text: `${fpretty} has no antiderivative you can write with the basic rules.` },
         { text: "So the area is found by approximation: slice it into thin columns and add them up — exactly what the animation does (a Riemann sum).", rule: "riemann sum" },
+        ...(crosses ? [{ text: `Columns above the axis add area, columns below subtract it. Green total ≈ ${fmt((unsigned + numIntegral(node, iA, iB)) / 2, 3)}, red total ≈ ${fmt((unsigned - numIntegral(node, iA, iB)) / 2, 3)}.` }] : []),
       ],
       answer: `area ≈ ${fmt(numIntegral(node, iA, iB), 5)}`,
       graphLead: convergeLead,
@@ -490,7 +518,7 @@ function integralWork(exprInput, iA, iB) {
     if (![Fa, Fb, val].every(Number.isFinite)) throw new Error("nonfinite");
   } catch {
     return {
-      mode: "integral", goal,
+      mode: "integral", goal, signNote, graphNote,
       steps: [{ text: "The antiderivative blows up somewhere on this interval, so fall back to the column approximation.", rule: "riemann sum" }],
       answer: `area ≈ ${fmt(numIntegral(node, iA, iB), 5)}`,
       graphLead: convergeLead,
@@ -508,10 +536,16 @@ function integralWork(exprInput, iA, iB) {
   const par = (v) => { const s = fmt(v, 4).replace(/-/g, "−"); return s.startsWith("−") ? `(${s})` : s; };
   const mm = (v) => fmt(v).replace(/-/g, "−");
   steps.push({ text: "Plug the two ends into F and subtract:", math: `F(${mm(iB)}) − F(${mm(iA)})  =  ${par(Fb)} − ${par(Fa)}` });
+  if (crosses) {
+    const green = (unsigned + val) / 2, red = (unsigned - val) / 2;
+    steps.push({
+      text: `The curve crosses the axis, so this answer is a difference: green area ≈ ${fmt(green, 3)} above, red area ≈ ${fmt(red, 3)} below. green − red = ${fmt(val, 4)}.`,
+    });
+  }
 
   return {
     mode: "integral",
-    goal,
+    goal, signNote, graphNote,
     steps,
     answer: `∫  =  ${fmt(val, 4)}`,
     graphLead: "The columns' running total on the lower graph lands on:",
@@ -1195,6 +1229,12 @@ export default function CalculusLab() {
               <section style={styles.sec}>
                 <h3 style={styles.secHead}>1 · What you're finding</h3>
                 <p style={styles.secBody}><Glossed>{work.goal}</Glossed></p>
+                {work.signNote && (
+                  <p style={styles.signNote}>
+                    <Dot c={COLORS.mint} /><Dot c={COLORS.rose} />
+                    <span><Glossed>{work.signNote}</Glossed></span>
+                  </p>
+                )}
               </section>
 
               <section style={styles.sec}>
@@ -1215,7 +1255,7 @@ export default function CalculusLab() {
                 <p style={styles.secNote}>
                   {mode === "derivative"
                     ? "That number is the height of the dot on the lower graph, and the tilt of the tangent line up top."
-                    : "That's where the running-total trace on the lower graph ends up."}
+                    : (work.graphNote || "That's where the running-total trace on the lower graph ends up.")}
                 </p>
               </section>
 
@@ -1546,6 +1586,12 @@ const styles = {
   },
   secBody: { fontSize: 13.5, lineHeight: 1.55, color: COLORS.ink, margin: 0 },
   secNote: { fontSize: 12, lineHeight: 1.5, color: COLORS.inkDim, margin: 0 },
+  signNote: {
+    display: "flex", alignItems: "flex-start", gap: 2, flexWrap: "wrap",
+    fontSize: 12.5, lineHeight: 1.5, color: COLORS.ink, margin: 0,
+    background: COLORS.chipBg, border: `1px solid ${COLORS.border}`,
+    borderRadius: 8, padding: "8px 10px",
+  },
   liveVal: { fontFamily: "'IBM Plex Mono', monospace", color: COLORS.coral, fontWeight: 700 },
 
   wSteps: { listStyle: "none", margin: 0, padding: 0, display: "flex", flexDirection: "column", gap: 13 },
