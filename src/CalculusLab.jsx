@@ -50,6 +50,7 @@ const PRESETS = [
   { label: "ln(x)", expr: "log(x)", domain: [0.15, 6] },
   { label: "x·sin(x)", expr: "x*sin(x)", domain: [-8, 8] },
   { label: "sin(x²)", expr: "sin(x^2)", domain: [-2.6, 2.6] },
+  { label: "|x|", expr: "abs(x)", domain: [-3, 3] },
 ];
 
 const W = 640, H = 232;      // upper panel
@@ -128,6 +129,9 @@ const GLOSSARY = {
   "instantaneous rate of change": "The rate of change at one exact instant, not averaged over a stretch — the speedometer reading, not the whole-trip average.",
   "limit": "The value a function heads toward as its input creeps up on some number, even if it never lands exactly there.",
   "continuous": "A curve you can draw without lifting your pen — no gaps, jumps, or holes.",
+  "difference quotient": "[f(x+h) − f(x)] / h — the slope of the secant line between two points h apart. Let h shrink to 0 and it becomes the derivative. This is the definition of f′(x).",
+  "differentiability": "A function is differentiable at a point if it has one clear slope there. Sharp corners, cusps, and vertical tangents break it — a function can be continuous at a point and still not differentiable there.",
+  "dy/dx": "Another way to write the derivative f′(x). Also seen as y′ or d/dx[y]. It's read 'the derivative of y with respect to x,' not a fraction.",
   "power rule": "To differentiate x to a power: bring the power down in front as a multiplier, then lower the power by 1. So x⁴ becomes 4x³.",
   "sum rule": "The derivative of terms added together is just the derivative of each term, added together. Work one term at a time.",
   "constant rule": "The derivative of a plain number is 0 — a constant never changes, so its rate of change is nothing.",
@@ -198,6 +202,7 @@ function prettyMath(s) {
     .replace(/\s*\*\s*/g, "·")
     .replace(/\s*\^\s*/g, "^")
     .replace(/log\(abs\(([^()]+)\)\)/g, "ln|$1|")
+    .replace(/\babs\(([^()]+)\)/g, "|$1|")
     .replace(/\blog\(/g, "ln(")
     .replace(/\bexp\(/g, "e^(")
     .replace(/\bsqrt\(/g, "√(")
@@ -361,6 +366,11 @@ function derivativeSteps(t) {
     { text: `This term is just the number ${prettyMath(t.toString())}. A constant never changes, so its rate of change — its derivative — is 0.`, rule: "constant rule" },
   ];
 
+  if (key === "abs(x)") return [
+    { text: "|x| is V-shaped: it falls with slope −1 to the left of 0 and rises with slope +1 to the right." },
+    { text: "So f′(x) = −1 for x < 0 and f′(x) = +1 for x > 0 — but at x = 0 the left and right slopes disagree, so f′(0) does not exist. |x| is the classic reminder that a continuous function isn't always differentiable.", rule: "differentiability" },
+  ];
+
   if (BASIC_DERIV[key]) return [
     { text: BASIC_DERIV[key].text, rule: BASIC_DERIV[key].rule },
     { text: "So the slope formula is:", math: whole() },
@@ -474,7 +484,7 @@ function derivativeWork(exprInput) {
   return {
     mode: "derivative",
     problem: `d/dx [ ${prettyMath(exprInput)} ]`,
-    goal: `You're finding f′(x): a formula for the slope of f(x) = ${prettyMath(exprInput)}. Feed it any x and it returns how steep the curve is at that point.`,
+    goal: `You're finding f′(x) — also written dy/dx or y′ — a formula for the slope of f(x) = ${prettyMath(exprInput)}. Feed it any x and it returns how steep the curve is at that point.`,
     steps,
     answer: `f′(x)  =  ${ans}`,
     graphLead: "Take the marker's x, drop it into the formula:",
@@ -836,15 +846,29 @@ export default function CalculusLab() {
     return { x0: cursorX, y0: cursorY, xr: cursorX + run, rise: slope * run, dir };
   }, [cursorX, cursorY, slope, a, b]);
 
+  /* is the curve continuous but non-differentiable right at the marker?
+     (a corner: the slope coming in from the left ≠ the slope going out right) */
+  const kink = useMemo(() => {
+    if (!fn) return null;
+    const e = Math.max((b - a) * 5e-4, 1e-4);
+    const y0 = safe(fn, cursorX), yL = safe(fn, cursorX - e), yR = safe(fn, cursorX + e);
+    if (![y0, yL, yR].every(Number.isFinite)) return null;
+    const sL = (y0 - yL) / e, sR = (yR - y0) / e;
+    const scale = Math.max(1, Math.abs(sL), Math.abs(sR));
+    return Math.abs(sL - sR) > 0.6 * scale ? { sL, sR } : null;
+  }, [fn, cursorX, a, b]);
+
   /* one-line story of what the tangent's tilt means right now */
   const flatBand = (Math.abs(dyHi - dyLo) || 2) * 0.04;
-  const slopeStory = !Number.isFinite(slope)
-    ? null
-    : Math.abs(slope) <= flatBand
-      ? "▬  tangent is flat — f has leveled off, so f′(x) = 0"
-      : slope > 0
-        ? "▲  tangent tilts up — f is increasing, so f′(x) > 0"
-        : "▼  tangent tilts down — f is decreasing, so f′(x) < 0";
+  const slopeStory = kink
+    ? `✕  no derivative here — the slope jumps from ${fmt(kink.sL)} on the left to ${fmt(kink.sR)} on the right. f is continuous but not differentiable at this point.`
+    : !Number.isFinite(slope)
+      ? null
+      : Math.abs(slope) <= flatBand
+        ? "▬  tangent is flat — f has leveled off, so f′(x) = 0"
+        : slope > 0
+          ? "▲  tangent tilts up — f is increasing, so f′(x) > 0"
+          : "▼  tangent tilts down — f is decreasing, so f′(x) < 0";
 
   const derivTracePts = useMemo(() => derivPts.filter((p) => p[0] <= cursorX), [derivPts, cursorX]);
   const derivTracePath = useMemo(() => pathFromPoints(derivTracePts, xToPx, yToPx2), [derivTracePts, xToPx, yToPx2]);
@@ -1203,7 +1227,7 @@ export default function CalculusLab() {
               )}
             </div>
             {mode === "derivative" && slopeStory && (
-              <div style={styles.slopeStory}>{slopeStory}</div>
+              <div style={{ ...styles.slopeStory, ...(kink ? styles.slopeStoryWarn : {}) }}>{slopeStory}</div>
             )}
           </div>
 
@@ -1543,8 +1567,9 @@ const styles = {
   slopeStory: {
     marginTop: 6, marginLeft: 2, padding: "5px 9px", borderRadius: 8,
     background: "#FFF1EC", color: "#B4502F", fontFamily: "'Inter', sans-serif",
-    fontSize: 12, fontWeight: 600, minHeight: 22,
+    fontSize: 12, fontWeight: 600, minHeight: 22, lineHeight: 1.45,
   },
+  slopeStoryWarn: { background: "#FDECEC", color: "#B3423E", border: `1px solid ${COLORS.rose}` },
   bridge: {
     display: "flex", alignItems: "flex-start", gap: 8,
     background: "#EEF3FF", border: `1px solid ${COLORS.blue}`, borderRadius: 12,
