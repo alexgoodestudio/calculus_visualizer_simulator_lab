@@ -33,16 +33,23 @@ const COLORS = {
 };
 
 const PRESETS = [
+  { label: "3", expr: "3", domain: [-4, 4] },
+  { label: "x", expr: "x", domain: [-4, 4] },
   { label: "x²", expr: "x^2", domain: [-4, 4] },
   { label: "x³ − 3x", expr: "x^3 - 3*x", domain: [-3, 3] },
+  { label: "3x² + 2x − 5", expr: "3*x^2 + 2*x - 5", domain: [-4, 3] },
+  { label: "√x", expr: "sqrt(x)", domain: [0, 8] },
+  { label: "1/x", expr: "1/x", domain: [-4, 4] },
+  { label: "(x+1)/(x²+1)", expr: "(x + 1)/(x^2 + 1)", domain: [-5, 5] },
+  { label: "x/(x²+1)", expr: "x/(x^2 + 1)", domain: [-5, 5] },
+  { label: "(2x+1)²", expr: "(2*x + 1)^2", domain: [-3, 2] },
+  { label: "(x²+1)³", expr: "(x^2 + 1)^3", domain: [-1.6, 1.6] },
   { label: "sin(x)", expr: "sin(x)", domain: [-6.3, 6.3] },
   { label: "cos(x)", expr: "cos(x)", domain: [-6.3, 6.3] },
   { label: "eˣ", expr: "exp(x)", domain: [-2, 2.5] },
   { label: "ln(x)", expr: "log(x)", domain: [0.15, 6] },
-  { label: "1/x", expr: "1/x", domain: [-4, 4] },
   { label: "x·sin(x)", expr: "x*sin(x)", domain: [-8, 8] },
   { label: "sin(x²)", expr: "sin(x^2)", domain: [-2.6, 2.6] },
-  { label: "√x", expr: "sqrt(x)", domain: [0, 8] },
 ];
 
 const W = 640, H = 232;      // upper panel
@@ -350,6 +357,10 @@ function derivativeSteps(t) {
   const whole = () => { try { return prettyMath(simpStr(math.derivative(t, "x"))); } catch { return "—"; } };
   const key = t.toString().replace(/\s+/g, "");
 
+  if (!hasX(t)) return [
+    { text: `This term is just the number ${prettyMath(t.toString())}. A constant never changes, so its rate of change — its derivative — is 0.`, rule: "constant rule" },
+  ];
+
   if (BASIC_DERIV[key]) return [
     { text: BASIC_DERIV[key].text, rule: BASIC_DERIV[key].rule },
     { text: "So the slope formula is:", math: whole() },
@@ -372,6 +383,21 @@ function derivativeSteps(t) {
       { text: `${prettyMath(t.toString())} is x raised to a fixed power (n = ${n}).` },
       { text: "Power Rule — a rule for derivatives: drop the exponent to the front as a multiplier, then subtract 1 from the exponent.", math: `${prettyMath(t.toString())}  →  ${whole()}`, rule: "power rule" },
     ];
+  }
+
+  // (inner)^n  — power rule on the outside, chain rule for the inside
+  if (t.isOperatorNode && t.op === "^" && constVal(t.args[1]) !== null && hasX(t.args[0])) {
+    const u = stripParen(t.args[0]);
+    if (!(u.isSymbolNode && u.name === "x")) {
+      const nn = constVal(t.args[1]);
+      const us = prettyMath(u.toString());
+      return [
+        { text: `${prettyMath(t.toString())} is a whole expression raised to a power: the inside is ${us}, raised to ${nn}.` },
+        { text: "Use the Chain Rule with the power rule on the outside:", math: "d/dx[ uⁿ ]  =  n·uⁿ⁻¹ · u′", rule: "chain rule" },
+        { text: `Here u = ${us} (so u′ = ${dOf(u)}):`, math: `${nn}·(${us})^${nn - 1} · ${dOf(u)}` },
+        { text: "Multiplied out:", math: whole() },
+      ];
+    }
   }
 
   if (t.isOperatorNode && t.op === "*" && t.args.length === 2 &&
@@ -447,6 +473,7 @@ function derivativeWork(exprInput) {
   }
   return {
     mode: "derivative",
+    problem: `d/dx [ ${prettyMath(exprInput)} ]`,
     goal: `You're finding f′(x): a formula for the slope of f(x) = ${prettyMath(exprInput)}. Feed it any x and it returns how steep the curve is at that point.`,
     steps,
     answer: `f′(x)  =  ${ans}`,
@@ -459,6 +486,7 @@ function integralWork(exprInput, iA, iB) {
   let node;
   try { node = math.parse(exprInput); } catch { return null; }
   const fpretty = prettyMath(exprInput);
+  const problem = `∫ ( ${fpretty} ) dx     from ${fmt(iA).replace(/-/g, "−")} to ${fmt(iB).replace(/-/g, "−")}`;
 
   // Does the curve sit above the axis, below it, or cross? Drives the green/red wording.
   let sawPos = false, sawNeg = false, unsigned = 0;
@@ -488,7 +516,21 @@ function integralWork(exprInput, iA, iB) {
       ? "The running total only ever falls, since every slice of area is negative."
       : "The running total only ever climbs, since every slice of area is positive.";
   const convergeLead = "The running total on the lower graph converges to:";
-  const terms = topLevelTerms(node);
+
+  const integrableBy = (nd) => topLevelTerms(nd).every(({ node: t }) => { try { antideriv(t); return true; } catch { return false; } });
+  // If it's a polynomial hiding behind powers/products — (x²+1)³, (2x+1)² — expand it first.
+  let intNode = node, expandStep = null;
+  if (!integrableBy(node)) {
+    try {
+      const r = math.rationalize(node);
+      if (!/\//.test(r.toString()) && integrableBy(r)) {
+        intNode = r;
+        expandStep = { text: `First expand it into a polynomial: ${fpretty} = ${prettyMath(r.toString())}. Now integrate term by term.` };
+      }
+    } catch { /* not expandable */ }
+  }
+
+  const terms = topLevelTerms(intNode);
   const parts = [];
   const antiSteps = [];
   let ok = true;
@@ -504,7 +546,7 @@ function integralWork(exprInput, iA, iB) {
 
   if (!ok || !parts.length) {
     return {
-      mode: "integral", goal, signNote, graphNote,
+      mode: "integral", problem, goal, signNote, graphNote,
       steps: [
         { text: `${fpretty} has no antiderivative you can write with the basic rules.` },
         { text: "So the area is found by approximation: slice it into thin columns and add them up — exactly what the animation does (a Riemann sum).", rule: "riemann sum" },
@@ -528,7 +570,7 @@ function integralWork(exprInput, iA, iB) {
     if (![Fa, Fb, val].every(Number.isFinite)) throw new Error("nonfinite");
   } catch {
     return {
-      mode: "integral", goal, signNote, graphNote,
+      mode: "integral", problem, goal, signNote, graphNote,
       steps: [{ text: "The antiderivative blows up somewhere on this interval, so fall back to the column approximation.", rule: "riemann sum" }],
       answer: `area ≈ ${fmt(numIntegral(node, iA, iB), 5)}`,
       graphLead: convergeLead,
@@ -540,6 +582,7 @@ function integralWork(exprInput, iA, iB) {
   const steps = [
     { text: "To get an exact area, first find an antiderivative F(x) — a function whose derivative is f(x). Reversing differentiation like this is the Fundamental Theorem of Calculus.", rule: "fundamental theorem of calculus" },
   ];
+  if (expandStep) steps.push(expandStep);
   if (multi) steps.push({ text: "Integrate each term separately (Sum Rule):", rule: "sum rule" });
   antiSteps.forEach((s) => steps.push(s));
   steps.push({ text: multi ? "Add the pieces:" : "So:", math: `F(x)  =  ${Fpretty}` });
@@ -555,7 +598,7 @@ function integralWork(exprInput, iA, iB) {
 
   return {
     mode: "integral",
-    goal, signNote, graphNote,
+    problem, goal, signNote, graphNote,
     steps,
     answer: `∫  =  ${fmt(val, 4)}`,
     graphLead: "The columns' running total on the lower graph lands on:",
@@ -813,11 +856,9 @@ export default function CalculusLab() {
   if (stageIdx === -1) stageIdx = stageBounds.length - 1;
   const n = stageN[stageIdx];
   const smooth = progress >= 1;
-  // Columns rise from the axis over the first third of each refinement stage.
-  const stageLo = stageIdx === 0 ? 0 : stageBounds[stageIdx - 1];
-  const stageProg = Math.min(1, Math.max(0, (progress - stageLo) / (stageBounds[stageIdx] - stageLo)));
-  const rawGrow = Math.min(1, stageProg / 0.34);
-  const colGrow = rawGrow >= 1 ? 1 : 1 - Math.pow(1 - rawGrow, 3);
+  // Columns wipe in left-to-right (each one emerging from its left neighbour)
+  // across the first ~88% of the run; refinement happens under the wipe.
+  const revealFrac = smooth ? 1 : Math.min(1, progress / 0.88);
   // Crossfade the discrete columns into the smooth area over the last slice.
   const smoothMix = progress <= 0.9 ? 0 : Math.min(1, (progress - 0.9) / 0.1);
 
@@ -1111,21 +1152,26 @@ export default function CalculusLab() {
               {mode === "integral" && fn && (
                 <>
                   {smoothMix < 1 && rectangles.map((r, i) => {
-                    const x0 = xToPx(r.x0), x1 = xToPx(r.x1);
-                    const yZero = yToPx(0);
-                    const yTop = yZero + (yToPx(r.h) - yZero) * colGrow;
+                    const span = iB - iA || 1;
+                    const leftFrac = (r.x0 - iA) / span;
+                    const rightFrac = (r.x1 - iA) / span;
+                    if (leftFrac >= revealFrac) return null;          // wipe hasn't reached this column yet
+                    const shownRight = iA + Math.min(rightFrac, revealFrac) * span;
+                    const xL = xToPx(r.x0), xR = xToPx(shownRight);
+                    const yZero = yToPx(0), yTop = yToPx(r.h);
                     const negative = r.h < 0;
+                    const full = shownRight >= r.x1 - 1e-9;
                     return (
                       <rect
                         key={i}
-                        x={Math.min(x0, x1)}
-                        width={Math.max(1, Math.abs(x1 - x0) - 0.6)}
+                        x={Math.min(xL, xR)}
+                        width={Math.max(0.5, Math.abs(xR - xL) - (full ? 0.6 : 0))}
                         y={Math.min(yZero, yTop)}
                         height={Math.max(0.5, Math.abs(yTop - yZero))}
                         fill={negative ? COLORS.rose : COLORS.mint}
                         opacity={0.42 * (1 - smoothMix)}
                         stroke={negative ? COLORS.rose : COLORS.mint}
-                        strokeWidth={0.9}
+                        strokeWidth={full ? 0.9 : 0}
                       />
                     );
                   })}
@@ -1248,6 +1294,7 @@ export default function CalculusLab() {
 
               <section style={styles.sec}>
                 <h3 style={styles.secHead}>2 · How to do it by hand</h3>
+                {work.problem && <div style={styles.problem}>{work.problem}</div>}
                 <WorkSteps steps={work.steps} />
                 <div style={styles.answer}>
                   <span style={styles.answerTag}>answer</span>
@@ -1591,6 +1638,11 @@ const styles = {
 
   sec: { display: "flex", flexDirection: "column", gap: 9 },
   sec3: { minHeight: 132 },
+  problem: {
+    fontFamily: "'IBM Plex Mono', monospace", fontSize: 14, fontWeight: 600,
+    color: COLORS.ink, background: COLORS.chipBg, border: `1px solid ${COLORS.border}`,
+    borderRadius: 8, padding: "9px 12px", wordBreak: "break-word", letterSpacing: "0.01em",
+  },
   secHead: {
     fontFamily: "'Poppins', sans-serif", fontWeight: 700, fontSize: 13.5,
     color: COLORS.violet, margin: 0, letterSpacing: "-0.01em",
