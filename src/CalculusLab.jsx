@@ -97,6 +97,16 @@ function fmt(n, digits = 3) {
   return Number(n.toPrecision(digits)).toString();
 }
 
+/* Snap a streaming value to a readable step (~1/15 of its scale) so the live
+   readouts tick through ~15 legible checkpoints instead of blurring past. */
+function quantize(v, scale) {
+  if (!Number.isFinite(v)) return v;
+  const target = Math.max(Math.abs(scale) || 0, 1e-6) / 15;
+  const mag = Math.pow(10, Math.floor(Math.log10(target)));
+  const step = Math.max(1, Math.round(target / mag)) * mag;
+  return Math.round(v / step) * step;
+}
+
 /* ============================================================
    GLOSSARY — plain-language definitions for brand-new students.
    Keys are matched (case-insensitively, whole word) inside the
@@ -876,10 +886,6 @@ export default function CalculusLab() {
     } catch { return null; }
   }, [mode, exprInput, iA, iB]);
 
-  /* The one live value the "on the graph" section reads out. */
-  const workLiveValue = mode === "derivative"
-    ? (Number.isFinite(cursorX) && Number.isFinite(slope) ? `f′(${fmt(cursorX)}) = ${fmt(slope)}` : "—")
-    : `${fmt(accumNow, 4)}`;
 
   /* Which toolbox rules the current worked solution actually leans on. */
   const activeRuleKeys = useMemo(
@@ -888,19 +894,22 @@ export default function CalculusLab() {
   );
 
   const stats = useMemo(() => {
+    // While playing, snap the streaming readouts to coarse checkpoints so they
+    // stay legible; show full precision the moment the animation is stopped.
+    const q = (v, scale) => fmt(playing ? quantize(v, scale) : v, 4);
     if (mode === "derivative") {
       return [
-        { label: "x", value: fmt(cursorX) },
-        { label: "f(x)", value: fmt(cursorY) },
-        { label: "slope f′(x)", value: fmt(slope) },
+        { label: "x", value: q(cursorX, b - a) },
+        { label: "f(x)", value: q(cursorY, yHi - yLo) },
+        { label: "slope f′(x)", value: q(slope, dyHi - dyLo) },
       ];
     }
     return [
       { label: "columns", value: smooth ? "smooth" : String(n) },
-      { label: "area estimate", value: smooth ? fmt(exactIntegral, 5) : fmt(riemannSum, 4) },
-      { label: "area so far", value: fmt(accumNow, 4) },
+      { label: "area estimate", value: smooth ? fmt(exactIntegral, 4) : q(riemannSum, afHi - afLo) },
+      { label: "area so far", value: q(accumNow, afHi - afLo) },
     ];
-  }, [mode, cursorX, cursorY, slope, n, smooth, riemannSum, exactIntegral, accumNow]);
+  }, [mode, playing, cursorX, cursorY, slope, n, smooth, riemannSum, exactIntegral, accumNow, a, b, yLo, yHi, dyLo, dyHi, afLo, afHi]);
 
   return (
     <div style={styles.app}>
@@ -1246,15 +1255,12 @@ export default function CalculusLab() {
                 </div>
               </section>
 
-              <section style={styles.sec}>
+              <section style={{ ...styles.sec, ...styles.sec3 }}>
                 <h3 style={styles.secHead}>3 · On the graph right now</h3>
                 <StatRow stats={stats} />
-                <p style={styles.secBody}>
-                  {work.graphLead} <b style={styles.liveVal}>{workLiveValue}</b>
-                </p>
                 <p style={styles.secNote}>
                   {mode === "derivative"
-                    ? "That number is the height of the dot on the lower graph, and the tilt of the tangent line up top."
+                    ? "These read the marker: x, the height f(x), and the slope f′(x) — which is the height of the dot on the lower graph and the tilt of the tangent line up top."
                     : (work.graphNote || "That's where the running-total trace on the lower graph ends up.")}
                 </p>
               </section>
@@ -1571,15 +1577,20 @@ const styles = {
   noteBody: { fontSize: 13.5, lineHeight: 1.6, color: COLORS.ink },
   conceptTitle: { fontFamily: "'Poppins', sans-serif", fontWeight: 700, fontSize: 14.5, marginBottom: 4, color: COLORS.violet },
   mono: { fontFamily: "'IBM Plex Mono', monospace", fontSize: 13, color: "#B8791A", wordBreak: "break-word" },
-  statRow: { display: "flex", gap: 8, marginTop: 10, flexWrap: "wrap" },
+  statRow: { display: "flex", gap: 8, marginTop: 4, flexWrap: "nowrap" },
   statPill: {
-    background: COLORS.chipBg, borderRadius: 10, padding: "6px 10px",
-    minWidth: 74, textAlign: "center", border: `1px solid ${COLORS.border}`,
+    background: COLORS.chipBg, borderRadius: 10, padding: "6px 6px",
+    flex: "1 1 0", minWidth: 0, textAlign: "center", border: `1px solid ${COLORS.border}`,
+    overflow: "hidden",
   },
-  statLabel: { fontSize: 9.5, color: COLORS.inkDim, fontFamily: "'Inter', sans-serif", marginBottom: 2, whiteSpace: "nowrap" },
-  statValue: { fontSize: 14, color: COLORS.ink, fontFamily: "'IBM Plex Mono', monospace", fontWeight: 600 },
+  statLabel: { fontSize: 9.5, color: COLORS.inkDim, fontFamily: "'Inter', sans-serif", marginBottom: 2, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" },
+  statValue: {
+    fontSize: 14, color: COLORS.ink, fontFamily: "'IBM Plex Mono', monospace", fontWeight: 600,
+    fontVariantNumeric: "tabular-nums", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis",
+  },
 
   sec: { display: "flex", flexDirection: "column", gap: 9 },
+  sec3: { minHeight: 132 },
   secHead: {
     fontFamily: "'Poppins', sans-serif", fontWeight: 700, fontSize: 13.5,
     color: COLORS.violet, margin: 0, letterSpacing: "-0.01em",
