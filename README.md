@@ -1,6 +1,8 @@
 # Calculus Lab — Interactive Derivative & Integral Visualizer
 
-**Live:** https://alexgoodestudio.github.io/calculus_visualizer_simulator_lab/
+### ▶︎ [Try it live](https://alexgoodestudio.github.io/calculus_visualizer_simulator_lab/)
+
+<https://alexgoodestudio.github.io/calculus_visualizer_simulator_lab/>
 
 A free, interactive visualization tool for understanding derivatives and integrals in real time —
 built for Calculus 1 students. Watch the tangent line and its slope graph move, see Riemann sums
@@ -80,5 +82,7 @@ I wanted this to *feel* like a study desk, not a dark-mode hacker tool. Soft lav
 - 3D surface plots for multivariable calculus (eventually)
 
 ---
+
+**Live site:** <https://alexgoodestudio.github.io/calculus_visualizer_simulator_lab/>
 
 **Note**: This is a learning project, not a tutoring substitute. Use it alongside your textbook. If something doesn't match what your professor said, trust your professor (and let me know what I got wrong).
