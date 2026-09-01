@@ -722,6 +722,7 @@ export default function CalculusLab() {
   const [domain, setDomain] = useState([-4, 4]);
   const [activePreset, setActivePreset] = useState("x²");
   const [mode, setMode] = useState("derivative"); // 'derivative' | 'integral'
+  const [derivAnim, setDerivAnim] = useState("slide"); // 'slide' | 'hZero'
   const [progress, setProgress] = useState(0);
   const [playing, setPlaying] = useState(false);
   const [speed, setSpeed] = useState(1);
@@ -801,6 +802,7 @@ export default function CalculusLab() {
   };
 
   const setModeAndReset = (m) => { setMode(m); handleReset(); };
+  const setDerivAnimAndReset = (m) => { setDerivAnim(m); handleReset(); };
 
   const curvePts = useMemo(() => (fn ? sample(fn, a, b) : []), [fn, a, b]);
   const [yLo, yHi] = useMemo(() => yExtent(curvePts), [curvePts]);
@@ -825,9 +827,27 @@ export default function CalculusLab() {
   const derivPath = useMemo(() => pathFromPoints(derivPts, xToPx, yToPx2), [derivPts, xToPx, yToPx2]);
 
   /* ---------------- DERIVATIVE MODE geometry ---------------- */
-  const cursorX = a + progress * (b - a);
+  // "slide" sweeps the point along x; "hZero" holds x and shrinks h so the
+  // secant line collapses onto the tangent (the limit definition, Larson 2.1).
+  const hZero = mode === "derivative" && derivAnim === "hZero";
+  const cursorX = hZero ? a + (b - a) * 0.6 : a + progress * (b - a);
   const cursorY = fn ? safe(fn, cursorX) : NaN;
   const slope = derivFn ? safe(derivFn, cursorX) : NaN;
+
+  const hCur = hZero
+    ? Math.max((b - a) * 0.004, (b - a) * 0.34 * (1 - Math.pow(progress, 0.7)))
+    : null;
+  const secX = hZero ? cursorX + hCur : NaN;
+  const secY = hZero && fn ? safe(fn, secX) : NaN;
+  const secSlope = hZero && Number.isFinite(secY) && Number.isFinite(cursorY)
+    ? (secY - cursorY) / hCur
+    : NaN;
+  const secantPath = useMemo(() => {
+    if (!hZero || !Number.isFinite(cursorY) || !Number.isFinite(secSlope)) return "";
+    const half = (b - a) * 0.34;
+    const x1 = cursorX - half, x2 = secX + half * 0.25;
+    return `M ${xToPx(x1)} ${yToPx(cursorY - secSlope * (cursorX - x1))} L ${xToPx(x2)} ${yToPx(cursorY + secSlope * (x2 - cursorX))}`;
+  }, [hZero, cursorX, cursorY, secX, secSlope, a, b, xToPx, yToPx]);
 
   const tangentPath = useMemo(() => {
     if (!Number.isFinite(cursorY) || !Number.isFinite(slope)) return "";
@@ -874,17 +894,16 @@ export default function CalculusLab() {
   const derivTracePath = useMemo(() => pathFromPoints(derivTracePts, xToPx, yToPx2), [derivTracePts, xToPx, yToPx2]);
 
   /* ---------------- INTEGRAL MODE geometry ---------------- */
-  const stageBounds = [0.16, 0.32, 0.48, 0.64, 0.80, 1.0];
+  // Refinement is stepped: each n just holds for its slice of the timeline
+  // (a short pause), then snaps to the next. No slide, no grow.
+  const stageBounds = [0.18, 0.36, 0.54, 0.72, 0.9, 1.0];
   const stageN = [6, 12, 24, 48, 96, 160];
   let stageIdx = stageBounds.findIndex((s) => progress <= s);
   if (stageIdx === -1) stageIdx = stageBounds.length - 1;
   const n = stageN[stageIdx];
   const smooth = progress >= 1;
-  // Columns wipe in left-to-right (each one emerging from its left neighbour)
-  // across the first ~88% of the run; refinement happens under the wipe.
-  const revealFrac = smooth ? 1 : Math.min(1, progress / 0.88);
-  // Crossfade the discrete columns into the smooth area over the last slice.
-  const smoothMix = progress <= 0.9 ? 0 : Math.min(1, (progress - 0.9) / 0.1);
+  // Only the very end dissolves the staircase into the exact shaded area.
+  const smoothMix = progress <= 0.92 ? 0 : Math.min(1, (progress - 0.92) / 0.08);
 
   const rectangles = useMemo(() => {
     if (!fn) return [];
@@ -1133,9 +1152,25 @@ export default function CalculusLab() {
           <div style={styles.plotFrame}>
             <div style={styles.plotTitle}>
               {mode === "derivative"
-                ? <>Finding the <b style={styles.plotTitleWord}>derivative</b> of <span style={styles.plotTitleFn}>f(x) = {exprInput}</span></>
+                ? (hZero
+                    ? <>The <b style={styles.plotTitleWord}>definition</b>: as h → 0 the secant line becomes the tangent, at <span style={styles.plotTitleFn}>x = {fmt(cursorX)}</span></>
+                    : <>Finding the <b style={styles.plotTitleWord}>derivative</b> of <span style={styles.plotTitleFn}>f(x) = {exprInput}</span></>)
                 : <>Finding the <b style={styles.plotTitleWord}>integral</b> of <span style={styles.plotTitleFn}>f(x) = {exprInput}</span> from {fmt(iA)} to {fmt(iB)}</>}
             </div>
+            {mode === "derivative" && (
+              <div style={styles.subToggle}>
+                {[["slide", "slide the point"], ["hZero", "shrink h  →  0"]].map(([k, lbl]) => (
+                  <button
+                    key={k}
+                    className="cl-tab"
+                    onClick={() => setDerivAnimAndReset(k)}
+                    style={{ ...styles.subToggleBtn, ...(derivAnim === k ? styles.subToggleOn : {}) }}
+                  >
+                    {lbl}
+                  </button>
+                ))}
+              </div>
+            )}
             <svg viewBox={`0 0 ${W} ${H}`} style={styles.svg} role="img" aria-label="Function plot">
               <Grid a={a} b={b} yLo={vLo} yHi={vHi} xToPx={xToPx} yToPx={yToPx} w={W} h={H} />
               <path d={mainPath} stroke={COLORS.curve} strokeWidth={2.5} fill="none" strokeLinecap="round" />
@@ -1145,8 +1180,26 @@ export default function CalculusLab() {
                   {/* shared x-guide: same x as the lower graph */}
                   <line x1={xToPx(cursorX)} x2={xToPx(cursorX)} y1={PAD.t} y2={H - PAD.b}
                     stroke={COLORS.violet} strokeWidth={1} strokeDasharray="2 4" opacity={0.32} />
-                  <path d={tangentPath} stroke={COLORS.coral} strokeWidth={2.25} strokeLinecap="round" />
-                  {slopeRun && (
+
+                  {/* the target tangent — solid in slide mode, faint as the h→0 goal */}
+                  <path d={tangentPath} stroke={COLORS.coral} strokeWidth={hZero ? 1.75 : 2.25}
+                    strokeLinecap="round" opacity={hZero ? 0.4 : 1} strokeDasharray={hZero ? "5 4" : undefined} />
+
+                  {hZero && Number.isFinite(secY) && Number.isFinite(secSlope) && (
+                    <>
+                      <path d={secantPath} stroke={COLORS.gold} strokeWidth={2.25} strokeLinecap="round" />
+                      {/* run/rise legs of the difference quotient */}
+                      <line x1={xToPx(cursorX)} y1={yToPx(cursorY)} x2={xToPx(secX)} y2={yToPx(cursorY)}
+                        stroke={COLORS.gold} strokeWidth={1.4} strokeDasharray="4 3" />
+                      <line x1={xToPx(secX)} y1={yToPx(cursorY)} x2={xToPx(secX)} y2={yToPx(secY)}
+                        stroke={COLORS.gold} strokeWidth={1.4} strokeDasharray="4 3" />
+                      <text x={(xToPx(cursorX) + xToPx(secX)) / 2} y={yToPx(cursorY) + 12}
+                        fill={COLORS.gold} fontSize="8.5" textAnchor="middle" fontFamily="IBM Plex Mono, monospace">h</text>
+                      <circle cx={xToPx(secX)} cy={yToPx(secY)} r={4.5} fill={COLORS.gold} stroke="#fff" strokeWidth={2} />
+                    </>
+                  )}
+
+                  {!hZero && slopeRun && (
                     <g>
                       <line x1={xToPx(slopeRun.x0)} y1={yToPx(slopeRun.y0)} x2={xToPx(slopeRun.xr)} y2={yToPx(slopeRun.y0)}
                         stroke={COLORS.coral} strokeWidth={1.5} strokeDasharray="4 3" />
@@ -1158,16 +1211,19 @@ export default function CalculusLab() {
                         fill={COLORS.coral} fontSize="8.5" textAnchor={slopeRun.dir > 0 ? "start" : "end"} fontFamily="IBM Plex Mono, monospace">rise</text>
                     </g>
                   )}
+
                   {Number.isFinite(cursorY) && (
                     <>
                       <circle cx={xToPx(cursorX)} cy={yToPx(cursorY)} r={5.5} fill={COLORS.coral} stroke="#fff" strokeWidth={2} />
-                      <text
-                        x={xToPx(cursorX) + (cursorX > a + (b - a) * 0.72 ? -9 : 9)}
-                        y={yToPx(cursorY) - 9}
-                        fill={COLORS.coral} fontSize="11" fontWeight="700" fontFamily="IBM Plex Mono, monospace"
-                        textAnchor={cursorX > a + (b - a) * 0.72 ? "end" : "start"}>
-                        slope = {fmt(slope)}
-                      </text>
+                      {!hZero && (
+                        <text
+                          x={xToPx(cursorX) + (cursorX > a + (b - a) * 0.72 ? -9 : 9)}
+                          y={yToPx(cursorY) - 9}
+                          fill={COLORS.coral} fontSize="11" fontWeight="700" fontFamily="IBM Plex Mono, monospace"
+                          textAnchor={cursorX > a + (b - a) * 0.72 ? "end" : "start"}>
+                          slope = {fmt(slope)}
+                        </text>
+                      )}
                     </>
                   )}
                 </>
@@ -1176,26 +1232,20 @@ export default function CalculusLab() {
               {mode === "integral" && fn && (
                 <>
                   {smoothMix < 1 && rectangles.map((r, i) => {
-                    const span = iB - iA || 1;
-                    const leftFrac = (r.x0 - iA) / span;
-                    const rightFrac = (r.x1 - iA) / span;
-                    if (leftFrac >= revealFrac) return null;          // wipe hasn't reached this column yet
-                    const shownRight = iA + Math.min(rightFrac, revealFrac) * span;
-                    const xL = xToPx(r.x0), xR = xToPx(shownRight);
+                    const xL = xToPx(r.x0), xR = xToPx(r.x1);
                     const yZero = yToPx(0), yTop = yToPx(r.h);
                     const negative = r.h < 0;
-                    const full = shownRight >= r.x1 - 1e-9;
                     return (
                       <rect
                         key={i}
                         x={Math.min(xL, xR)}
-                        width={Math.max(0.5, Math.abs(xR - xL) - (full ? 0.6 : 0))}
+                        width={Math.max(0.5, Math.abs(xR - xL) - 0.6)}
                         y={Math.min(yZero, yTop)}
                         height={Math.max(0.5, Math.abs(yTop - yZero))}
                         fill={negative ? COLORS.rose : COLORS.mint}
                         opacity={0.42 * (1 - smoothMix)}
                         stroke={negative ? COLORS.rose : COLORS.mint}
-                        strokeWidth={full ? 0.9 : 0}
+                        strokeWidth={0.9}
                       />
                     );
                   })}
@@ -1210,15 +1260,26 @@ export default function CalculusLab() {
                   ))}
                   {/* baseline the columns rest on — makes signed area legible */}
                   <line x1={xToPx(iA)} x2={xToPx(iB)} y1={yToPx(0)} y2={yToPx(0)} stroke={COLORS.ink} strokeWidth={1.5} opacity={0.55} />
+                  <text x={W - PAD.r} y={PAD.t + 4} textAnchor="end"
+                    fill={COLORS.inkDim} fontSize="12" fontWeight="700" fontFamily="IBM Plex Mono, monospace">
+                    {smooth ? "exact area" : `${n} columns`}
+                  </text>
                 </>
               )}
             </svg>
             <div style={styles.legend}>
               {mode === "derivative" ? (
-                <>
-                  <Dot c={COLORS.curve} /> f(x)
-                  <Dot c={COLORS.coral} /> tangent line — its tilt is the slope
-                </>
+                hZero ? (
+                  <>
+                    <Dot c={COLORS.gold} /> secant line (slope = the difference quotient)
+                    <Dot c={COLORS.coral} /> tangent — the limit as h → 0
+                  </>
+                ) : (
+                  <>
+                    <Dot c={COLORS.curve} /> f(x)
+                    <Dot c={COLORS.coral} /> tangent line — its tilt is the slope
+                  </>
+                )
               ) : (
                 <>
                   <Dot c={COLORS.mint} /> area above axis (counts +)
@@ -1226,7 +1287,18 @@ export default function CalculusLab() {
                 </>
               )}
             </div>
-            {mode === "derivative" && slopeStory && (
+            {mode === "derivative" && hZero && Number.isFinite(secSlope) && (
+              <div style={styles.diffQuot}>
+                <span style={styles.dqExpr}>[f(x+h) − f(x)] / h</span>
+                {"  =  "}
+                <b>{fmt(secY - cursorY)}</b>{" / "}<b>{fmt(hCur)}</b>
+                {"  =  "}
+                <b style={{ color: COLORS.gold }}>{playing ? fmt(quantize(secSlope, dyHi - dyLo)) : fmt(secSlope)}</b>
+                {"   →   f′(x) = "}
+                <b style={{ color: COLORS.mint }}>{fmt(slope)}</b>
+              </div>
+            )}
+            {mode === "derivative" && !hZero && slopeStory && (
               <div style={{ ...styles.slopeStory, ...(kink ? styles.slopeStoryWarn : {}) }}>{slopeStory}</div>
             )}
           </div>
@@ -1240,7 +1312,10 @@ export default function CalculusLab() {
                   <line x1={xToPx(cursorX)} x2={xToPx(cursorX)} y1={PAD.t} y2={H2 - PAD.b}
                     stroke={COLORS.violet} strokeWidth={1} strokeDasharray="2 4" opacity={0.32} />
                   <path d={derivPath} stroke={COLORS.border} strokeWidth={1.5} fill="none" opacity={0.7} />
-                  <path d={derivTracePath} stroke={COLORS.mint} strokeWidth={2.5} fill="none" strokeLinecap="round" />
+                  {!hZero && <path d={derivTracePath} stroke={COLORS.mint} strokeWidth={2.5} fill="none" strokeLinecap="round" />}
+                  {hZero && Number.isFinite(secSlope) && (
+                    <circle cx={xToPx(cursorX)} cy={yToPx2(secSlope)} r={4.5} fill={COLORS.gold} stroke="#fff" strokeWidth={2} />
+                  )}
                   {Number.isFinite(slope) && (
                     <>
                       <line x1={PAD.l} x2={xToPx(cursorX)} y1={yToPx2(slope)} y2={yToPx2(slope)}
@@ -1570,6 +1645,23 @@ const styles = {
     fontSize: 12, fontWeight: 600, minHeight: 22, lineHeight: 1.45,
   },
   slopeStoryWarn: { background: "#FDECEC", color: "#B3423E", border: `1px solid ${COLORS.rose}` },
+  subToggle: {
+    display: "flex", gap: 4, marginBottom: 8, background: COLORS.chipBg,
+    border: `1px solid ${COLORS.border}`, borderRadius: 9, padding: 3, width: "fit-content",
+  },
+  subToggleBtn: {
+    background: "transparent", border: "none", cursor: "pointer",
+    fontFamily: "'Inter', sans-serif", fontWeight: 600, fontSize: 11.5,
+    color: COLORS.inkDim, padding: "5px 11px", borderRadius: 7,
+  },
+  subToggleOn: { background: COLORS.card, color: COLORS.violet, boxShadow: "0 1px 3px rgba(18,58,94,0.12)" },
+  diffQuot: {
+    marginTop: 7, marginLeft: 2, padding: "7px 10px", borderRadius: 8,
+    background: "#FFF8EC", border: `1px solid ${COLORS.gold}`,
+    fontFamily: "'IBM Plex Mono', monospace", fontSize: 11.5, color: COLORS.ink,
+    lineHeight: 1.6, wordBreak: "break-word",
+  },
+  dqExpr: { color: COLORS.inkDim },
   bridge: {
     display: "flex", alignItems: "flex-start", gap: 8,
     background: "#EEF3FF", border: `1px solid ${COLORS.blue}`, borderRadius: 12,
