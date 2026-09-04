@@ -1176,6 +1176,13 @@ export default function CalculusLab() {
           .limitPresetRow .cl-chip { white-space: nowrap; }
           .limitTableWrap { overflow-x: auto; }
           .limitTable { min-width: 420px; }
+          .limitViews { width: 100%; }
+          .limitViewButton { flex: 1; padding-inline: 8px !important; }
+          .directionGroup { width: 100%; }
+          .directionGroup .cl-chip { flex: 1; }
+          .transport { align-items: stretch; }
+          .transport .slider { order: 3; flex-basis: 100%; }
+          .speedGroup { margin-left: auto; }
           .flashIntro { flex-direction: column; align-items: flex-start !important; }
           .flashTitle { font-size: 28px !important; }
           .flashQuestion { font-size: 20px !important; }
@@ -1866,8 +1873,8 @@ function HomeScreen({ onOpenLab, onOpenLimits, onOpenFlashcards, onSelectPreset 
   ];
 
   return (
-    <section style={styles.home} aria-labelledby="home-title">
-      <div style={styles.homeIntro}>
+    <section className="home" style={styles.home} aria-labelledby="home-title">
+      <div className="homeIntro" style={styles.homeIntro}>
         <div>
           <div style={styles.homeKicker}>YOUR VISUAL CALCULUS DESK</div>
           <h1 id="home-title" style={styles.homeTitle}>Make calculus move.</h1>
@@ -1875,11 +1882,11 @@ function HomeScreen({ onOpenLab, onOpenLimits, onOpenFlashcards, onSelectPreset 
         </div>
         <div style={styles.homeFormula} aria-hidden="true"><span>f′(x)</span><b>↔</b><span>∫ f(x) dx</span></div>
       </div>
-      <div style={styles.homeSectionHead}>
+      <div className="homeSectionHead" style={styles.homeSectionHead}>
         <h2 style={styles.homeHeading}>Start with a guided experiment</h2>
         <span style={styles.homeHint}>Pick a path, then press play</span>
       </div>
-      <div style={styles.starterGrid}>
+      <div className="starterGrid" style={styles.starterGrid}>
         {starters.map((starter, index) => (
           <button key={starter.title} className="cl-btn homeStarter" onClick={() => starter.mode === "limit" ? onOpenLimits() : starter.mode === "flashcards" ? onOpenFlashcards() : onSelectPreset(starter.preset, starter.mode)} style={styles.starterCard}>
             <span style={styles.starterNumber}>{String(index + 1).padStart(2, "0")}</span>
@@ -1889,7 +1896,7 @@ function HomeScreen({ onOpenLab, onOpenLimits, onOpenFlashcards, onSelectPreset 
           </button>
         ))}
       </div>
-      <div style={styles.homeLowerGrid}>
+      <div className="homeLowerGrid" style={styles.homeLowerGrid}>
         <div style={styles.homeBand}>
           <div style={styles.bandNumber}>01</div>
           <div><h2 style={styles.homeHeading}>Limits</h2><p style={styles.homeBody}>Read what a function approaches, then connect that motion to the derivative.</p></div>
@@ -1906,12 +1913,12 @@ function HomeScreen({ onOpenLab, onOpenLimits, onOpenFlashcards, onSelectPreset 
           <button className="cl-btn" onClick={() => onOpenLab("integral")} style={{ ...styles.textButton, color: COLORS.mint }}>Explore area →</button>
         </div>
       </div>
-      <div style={styles.homeRoadmap}>
-        <div style={styles.homeSectionHead}>
+      <div className="homeRoadmap" style={styles.homeRoadmap}>
+        <div className="homeSectionHead" style={styles.homeSectionHead}>
           <h2 style={styles.homeHeading}>The Calculus I path</h2>
           <span style={styles.homeHint}>Concept first, computation second</span>
         </div>
-        <div style={styles.roadmapGrid}>
+        <div className="roadmapGrid" style={styles.roadmapGrid}>
           {["Limits & continuity", "Derivatives", "Applications", "Integrals & FTC"].map((step, index) => (
             <div key={step} style={styles.roadmapStep}>
               <span style={styles.roadmapNumber}>{String(index + 1).padStart(2, "0")}</span>
