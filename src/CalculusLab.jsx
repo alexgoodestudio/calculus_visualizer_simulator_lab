@@ -212,26 +212,40 @@ const LIMIT_PRESETS = [
   { label: "infinity", kind: "infinity", name: "A limit at infinity", expr: "(2*x^2 + 1)/(x^2 - 3)", at: 10, domain: [1, 10], limit: "2", value: "undefined", note: "As x travels far right, the graph settles toward the horizontal asymptote y = 2." },
 ];
 
+function LimitNotation({ target = "a" }) {
+  return (
+    <span
+      aria-label={`the limit as x approaches ${target} of f of x`}
+      style={{ display: "inline-flex", alignItems: "center", verticalAlign: "middle", gap: 4 }}
+    >
+      <span style={{ display: "inline-flex", flexDirection: "column", alignItems: "center", lineHeight: 0.85 }}>
+        <span>lim</span>
+        <span style={{ fontSize: "0.48em", fontFamily: "'IBM Plex Mono', monospace" }}>x→{target}</span>
+      </span>
+      <span>f(x)</span>
+    </span>
+  );
+}
+
 const FLASHCARDS = [
-  { category: "Limits", prompt: "How would you read lim x→a f(x) in plain English?", answer: "As x gets close to a, what value does f(x) get close to? The arrow means approaches, not equals.", formula: "lim x→a f(x) = L" },
-  { category: "Limits", prompt: "What is the difference between f(a) and lim x→a f(x)?", answer: "f(a) is the value assigned at a. The limit describes nearby behavior, so it can exist even when f(a) is missing or different.", formula: "nearby behavior ≠ assigned value" },
-  { category: "Limits", prompt: "When does a two-sided limit exist?", answer: "The left-hand and right-hand limits must both exist and agree. If they disagree, the two-sided limit does not exist.", formula: "lim x→a− f(x) = lim x→a+ f(x)" },
-  { category: "Limits", prompt: "What does 0/0 tell you after direct substitution?", answer: "It is indeterminate, not the answer. Try algebra such as factoring, canceling, or rationalizing to reveal the nearby behavior.", formula: "0/0 → investigate" },
-  { category: "Limits", prompt: "How would you read lim x→0 1/x² in plain English?", answer: "As x approaches 0 from either side, 1/x² grows without bound. This is an infinite limit and x = 0 is a vertical asymptote.", formula: "lim x→0 1/x² = +∞" },
-  { category: "Limits", prompt: "What are the three checks for continuity at x = a?", answer: "The function is defined at a, the limit exists, and the limit equals the function value.", formula: "f(a) exists; lim f exists; lim f = f(a)" },
-  { category: "Limits", prompt: "What does the Squeeze Theorem say?", answer: "If a function stays between two functions that approach the same limit, the middle function must approach that limit too.", formula: "g(x) ≤ f(x) ≤ h(x)" },
-  { category: "Derivatives", prompt: "What does the derivative measure?", answer: "The instantaneous rate of change: geometrically, the slope of the tangent line at a point.", formula: "f′(a) = tangent slope at x = a" },
-  { category: "Derivatives", prompt: "How is the derivative defined using a limit?", answer: "Start with a secant slope, then let the second point move toward the first. The difference quotient becomes the tangent slope.", formula: "f′(x) = lim h→0 [f(x+h) − f(x)]/h" },
-  { category: "Derivatives", prompt: "What is the power rule?", answer: "Bring the exponent down as a multiplier, then reduce the exponent by one.", formula: "d/dx[xⁿ] = n·xⁿ⁻¹" },
-  { category: "Derivatives", prompt: "When do you use the chain rule?", answer: "When one function is nested inside another. Differentiate the outside, keep the inside, then multiply by the inside derivative.", formula: "d/dx[f(g(x))] = f′(g(x))g′(x)" },
-  { category: "Derivatives", prompt: "What does a critical number tell you?", answer: "It is a candidate for a local maximum or minimum: f′(c) is zero or undefined, while c is in the domain.", formula: "f′(c) = 0 or undefined" },
+  { category: "Limits", prompt: <>How should you interpret <LimitNotation /> in words?</>, answer: "As x approaches a, f(x) approaches the number L. The notation describes the behavior of f(x) near a; it does not require x to equal a.", formula: "lim x→a f(x) = L" },
+  { category: "Limits", prompt: "How does f(a) differ from the limit of f(x) as x approaches a?", answer: "f(a) is the value of the function at a. The limit describes the values of f(x) near a, so the limit may exist even when f(a) is undefined or differs from it.", formula: "function value ≠ limiting value" },
+  { category: "Limits", prompt: "What condition is required for a two-sided limit to exist?", answer: "The left-hand and right-hand limits must both exist and be equal. If they differ, the two-sided limit does not exist.", formula: "lim x→a− f(x) = lim x→a+ f(x)" },
+  { category: "Limits", prompt: "What does the indeterminate form 0/0 indicate after direct substitution?", answer: "It does not determine the limit. Use algebraic techniques, such as factoring, canceling common factors, or rationalizing, to analyze the limiting behavior.", formula: "0/0 → further analysis" },
+  { category: "Limits", prompt: <>How should you interpret <LimitNotation target="0" /> when f(x) = 1/x²?</>, answer: "As x approaches 0 from either side, 1/x² increases without bound. Thus the function has an infinite limit and a vertical asymptote at x = 0.", formula: "lim x→0 1/x² = +∞" },
+  { category: "Limits", prompt: "What conditions must hold for f to be continuous at x = a?", answer: "f(a) must be defined, the limit of f(x) as x approaches a must exist, and that limit must equal f(a).", formula: "f(a) exists; lim f exists; lim f = f(a)" },
+  { category: "Limits", prompt: "State the Squeeze Theorem.", answer: "If g(x) ≤ f(x) ≤ h(x) near a, and g(x) and h(x) approach the same limit L as x approaches a, then f(x) also approaches L.", formula: "g(x) ≤ f(x) ≤ h(x)" },
+  { category: "Derivatives", prompt: "What does the derivative represent?", answer: "The derivative represents the instantaneous rate of change of a function. Geometrically, it is the slope of the tangent line at a point.", formula: "f′(a) = tangent slope at x = a" },
+  { category: "Derivatives", prompt: "How is the derivative defined as a limit?", answer: "The derivative is the limit of the secant slope as the second point approaches the first. This limiting difference quotient gives the slope of the tangent line.", formula: "f′(x) = lim h→0 [f(x+h) − f(x)]/h" },
+  { category: "Derivatives", prompt: "State the Power Rule.", answer: "For a constant exponent n, multiply by n and decrease the exponent by 1.", formula: "d/dx[xⁿ] = n·xⁿ⁻¹" },
+  { category: "Derivatives", prompt: "When is the Chain Rule used?", answer: "Use the Chain Rule to differentiate a composite function. Differentiate the outer function, evaluated at the inner function, and multiply by the derivative of the inner function.", formula: "d/dx[f(g(x))] = f′(g(x))g′(x)" },
+  { category: "Derivatives", prompt: "What is a critical number?", answer: "A critical number c is a number in the domain of f for which f′(c) = 0 or f′(c) does not exist. Critical numbers are candidates for local extrema.", formula: "f′(c) = 0 or undefined" },
   { category: "Derivatives", prompt: "What does the Mean Value Theorem guarantee?", answer: "If f is continuous on [a,b] and differentiable on (a,b), at least one c in (a,b) has an instantaneous slope equal to the average slope on [a,b].", formula: "f′(c) = [f(b) − f(a)]/(b − a)" },
-  { category: "Integrals", prompt: "What is a definite integral measuring?", answer: "Accumulated signed area: pieces above the x-axis count positive and pieces below count negative.", formula: "∫ₐᵇ f(x) dx" },
-  { category: "Integrals", prompt: "What is an antiderivative?", answer: "A function whose derivative is the original function. Integration reverses differentiation.", formula: "F′(x) = f(x)" },
-  { category: "Integrals", prompt: "What does the Fundamental Theorem of Calculus say?", answer: "It connects accumulation and derivatives: evaluate an antiderivative at the endpoints and subtract.", formula: "∫ₐᵇ f(x) dx = F(b) − F(a)" },
-  { category: "Integrals", prompt: "What is a Riemann sum?", answer: "An area estimate made by adding thin rectangles. More, thinner rectangles generally give a closer estimate.", formula: "Σ f(xᵢ)Δx → ∫ₐᵇ f(x) dx" },
-  { category: "Integrals", prompt: "What is the reverse power rule?", answer: "Raise the power by one and divide by the new power, except when the original power is −1.", formula: "∫xⁿ dx = xⁿ⁺¹/(n+1) + C" },
-  { category: "Foundations", prompt: "What is the difference between velocity and distance traveled?", answer: "Velocity is a rate at an instant. Distance is the accumulated total produced by that rate over time.", formula: "velocity → rate; distance → accumulation" },
+  { category: "Integrals", prompt: "What does a definite integral represent?", answer: "A definite integral represents accumulated signed area: contributions above the x-axis are positive and contributions below the x-axis are negative.", formula: "∫ₐᵇ f(x) dx" },
+  { category: "Integrals", prompt: "What is an antiderivative?", answer: "An antiderivative of f is a function F whose derivative is f. Thus integration reverses differentiation.", formula: "F′(x) = f(x)" },
+  { category: "Integrals", prompt: "State the Fundamental Theorem of Calculus for evaluating a definite integral.", answer: "If F is an antiderivative of f on [a,b], then the definite integral equals F(b) − F(a).", formula: "∫ₐᵇ f(x) dx = F(b) − F(a)" },
+  { category: "Integrals", prompt: "What is a Riemann sum?", answer: "A Riemann sum approximates a definite integral by adding the areas of rectangles. As the subinterval widths approach zero, the approximation approaches the integral.", formula: "Σ f(xᵢ)Δx → ∫ₐᵇ f(x) dx" },
+  { category: "Integrals", prompt: "State the Reverse Power Rule.", answer: "For n ≠ −1, increase the exponent by 1 and divide by the new exponent. Add the constant of integration C.", formula: "∫xⁿ dx = xⁿ⁺¹/(n+1) + C" },
   { category: "Limits", prompt: "What do ε and δ measure in the formal limit definition?", answer: "Epsilon controls the allowed output error, while delta controls how close the input must be to the target to guarantee it.", formula: "|f(x)−L| < ε when 0 < |x−c| < δ" },
   { category: "Limits", prompt: "How should you analyze a composite limit such as sin(1/x) as x→0?", answer: "Start with the inside: 1/x grows without bound. Then ask whether the outside function settles down; sine keeps oscillating, so the limit does not exist.", formula: "inside behavior → outside behavior" },
   { category: "Limits", prompt: "For a rational function, how do you distinguish a hole from a vertical asymptote?", answer: "Factor first. If a common factor cancels, the original function has a hole at that input. If a denominator factor remains while the numerator is nonzero, the function has a vertical asymptote there.", formula: "common factor cancels → hole; factor remains → asymptote" },
