@@ -1744,8 +1744,8 @@ function LimitScreen() {
   const yAtRight = evaluate(rightX);
   const W = 720, H = 330, pad = { l: 52, r: 24, t: 24, b: 42 };
   const isSqueeze = preset.kind === "squeeze";
-  const yMin = preset.kind === "infinite" ? -1 : preset.kind === "jump" ? -2 : isSqueeze ? -0.12 : preset.kind === "infinity" ? 0.5 : -1.5;
-  const yMax = preset.kind === "infinite" ? 14 : preset.kind === "jump" ? 2 : isSqueeze ? 0.12 : preset.kind === "infinity" ? 3.5 : 2.5;
+  const yMin = preset.kind === "infinite" ? -1 : preset.kind === "jump" ? -2 : isSqueeze ? -0.12 : preset.kind === "infinity" ? 0.5 : preset.kind === "direct" ? -2 : -1.5;
+  const yMax = preset.kind === "infinite" ? 14 : preset.kind === "jump" ? 2 : isSqueeze ? 0.12 : preset.kind === "infinity" ? 3.5 : preset.kind === "direct" ? 28 : 2.5;
   const xToPx = (value) => pad.l + ((value - xMin) / (xMax - xMin)) * (W - pad.l - pad.r);
   const yToPx = (value) => H - pad.b - ((value - yMin) / (yMax - yMin)) * (H - pad.t - pad.b);
   const points = [];
@@ -1775,7 +1775,10 @@ function LimitScreen() {
   const lowerSqueezeFill = toPath([...axisForward, ...lowerBoundPoints.slice().reverse()]) + " Z";
   const leftRight = direction === "both" ? "both sides" : `${direction}-hand side`;
   const distances = [0.5, 0.1, 0.01, 0.001];
-  const tableRows = distances.map((delta) => ({ delta, left: evaluate(preset.at - delta), right: evaluate(preset.at + delta) }));
+  const infinityXs = [10, 100, 1000, 10000];
+  const tableRows = isInfinity
+    ? infinityXs.map((value) => ({ delta: value, fx: evaluate(value) }))
+    : distances.map((delta) => ({ delta, left: evaluate(preset.at - delta), right: evaluate(preset.at + delta) }));
   const algebra = preset.kind === "hole" ? "Factor: (x² − 1)/(x − 1) = (x − 1)(x + 1)/(x − 1), so the nearby behavior is x + 1 → 2." : preset.kind === "jump" ? "The left side approaches −1, while the right side approaches 1. Because they disagree, the two-sided limit does not exist." : preset.kind === "infinite" ? "As x gets close to 0, x² gets close to 0, so 1/x² grows without bound. The line x = 0 is a vertical asymptote." : isSqueeze ? "Since −x² ≤ x²·sin(1/x) ≤ x² and both outer functions approach 0, the Squeeze Theorem gives a limit of 0." : preset.kind === "direct" ? "Substitute x = 2: 2² + 3(2) − 1 = 9. Because the result is an ordinary number, the limit is 9." : preset.kind === "rationalize" ? "Multiply by the conjugate to turn the 0/0 form into 1/(√(x+4)+2), which approaches 1/4." : preset.kind === "infinity" ? "Divide numerator and denominator by x². The lower-degree terms fade away, leaving 2/1 = 2." : "This is a special trig limit: the graph and table show sin(x)/x approaching 1 from both sides.";
   return (
     <section style={styles.limitScreen} aria-labelledby="limit-title">
@@ -1800,17 +1803,19 @@ function LimitScreen() {
             <button key={key} className="cl-tab" onClick={() => setLimitView(key)} style={{ ...styles.limitViewButton, ...(limitView === key ? styles.limitViewActive : {}) }}>{label}</button>
           ))}
         </div>
-        <div style={styles.directionGroup}>
-          <span style={styles.directionLabel}>Approach from</span>
-          {[['left', 'left'], ['both', 'both'], ['right', 'right']].map(([key, label]) => (
-            <button key={key} className="cl-chip" onClick={() => setDirection(key)} style={{ ...styles.directionButton, ...(direction === key ? styles.chipActive : {}) }}>{label}</button>
-          ))}
-        </div>
+        {!isInfinity && (
+          <div style={styles.directionGroup}>
+            <span style={styles.directionLabel}>Approach from</span>
+            {[['left', 'left'], ['both', 'both'], ['right', 'right']].map(([key, label]) => (
+              <button key={key} className="cl-chip" onClick={() => setDirection(key)} style={{ ...styles.directionButton, ...(direction === key ? styles.chipActive : {}) }}>{label}</button>
+            ))}
+          </div>
+        )}
       </div>
       <div className="limitLayout" style={styles.limitLayout}>
         <div style={styles.limitPlotFrame}>
-          <div style={styles.plotTitle}><b style={styles.plotTitleWord}>{preset.name}</b> · {preset.expr}{isSqueeze && <div style={styles.squeezeLegend}><span style={{ color: COLORS.mint }}>— x² upper bound</span><span style={{ color: COLORS.coral }}>— middle function</span><span style={{ color: COLORS.rose }}>— −x² lower bound</span></div>}</div>
-          {limitView === "graph" && <svg viewBox={`0 0 ${W} ${H}`} style={styles.svg} role="img" aria-label={`Graph of ${preset.expr} as x approaches ${preset.at}`}>
+          <div style={styles.plotTitle}><b style={styles.plotTitleWord}>{preset.name}</b> · {preset.expr}{isSqueeze && <div style={styles.squeezeLegend}><span style={{ color: COLORS.mint }}>— x² upper bound</span><span style={{ color: COLORS.coral }}>— middle function</span><span style={{ color: COLORS.rose }}>— −x² lower bound</span></div>}{isInfinity && <div style={styles.squeezeLegend}><span style={{ color: COLORS.violet }}>- - - horizontal asymptote y = 2</span><span style={{ color: COLORS.gold }}>● f(x) at the current x</span></div>}</div>
+          {limitView === "graph" && <svg viewBox={`0 0 ${W} ${H}`} style={styles.svg} role="img" aria-label={`Graph of ${preset.expr} as x approaches ${isInfinity ? "infinity" : preset.at}`}>
             <line x1={pad.l} x2={W - pad.r} y1={yToPx(0)} y2={yToPx(0)} stroke={COLORS.gridStrong} />
             <line x1={xToPx(0)} x2={xToPx(0)} y1={pad.t} y2={H - pad.b} stroke={COLORS.gridStrong} />
             {isSqueeze && <>
@@ -1824,13 +1829,13 @@ function LimitScreen() {
             <path d={path} stroke={isSqueeze ? COLORS.coral : COLORS.curve} strokeWidth={isSqueeze ? "3" : "2.5"} fill="none" strokeLinecap="round" />
             {!isInfinity && <line x1={xToPx(preset.at)} x2={xToPx(preset.at)} y1={pad.t} y2={H - pad.b} stroke={COLORS.violet} strokeDasharray="4 5" opacity="0.4" />}
             {isInfinity ? (
-              <><line x1={pad.l} x2={W - pad.r} y1={yToPx(2)} y2={yToPx(2)} stroke={COLORS.violet} strokeDasharray="5 4" opacity="0.7" /><text x={W - pad.r - 6} y={yToPx(2) - 8} textAnchor="end" fill={COLORS.violet} fontSize="11" fontWeight="700" fontFamily="IBM Plex Mono, monospace">horizontal asymptote y = 2</text></>
+              <line x1={pad.l} x2={W - pad.r} y1={yToPx(2)} y2={yToPx(2)} stroke={COLORS.violet} strokeDasharray="5 4" opacity="0.7" />
             ) : preset.kind === "infinite" ? (
               <text x={xToPx(preset.at) + 8} y={pad.t + 14} fill={COLORS.violet} fontSize="11" fontWeight="700" fontFamily="IBM Plex Mono, monospace">vertical asymptote</text>
             ) : (
               <circle cx={xToPx(preset.at)} cy={yToPx(Number(preset.limit) || 0)} r="6" fill={COLORS.card} stroke={COLORS.coral} strokeWidth="2.5" />
             )}
-            {direction === "both" ? (
+            {!isInfinity && direction === "both" ? (
               <>
                 {Number.isFinite(yAtLeft) && <><line x1={xToPx(leftX)} x2={xToPx(leftX)} y1={yToPx(0)} y2={yToPx(yAtLeft)} stroke={COLORS.coral} strokeDasharray="3 3" /><circle cx={xToPx(leftX)} cy={yToPx(yAtLeft)} r="6" fill={COLORS.coral} stroke="#fff" strokeWidth="2" /></>}
                 {Number.isFinite(yAtRight) && <><line x1={xToPx(rightX)} x2={xToPx(rightX)} y1={yToPx(0)} y2={yToPx(yAtRight)} stroke={COLORS.gold} strokeDasharray="3 3" /><circle cx={xToPx(rightX)} cy={yToPx(yAtRight)} r="6" fill={COLORS.gold} stroke="#fff" strokeWidth="2" /></>}
@@ -1840,20 +1845,29 @@ function LimitScreen() {
           </svg>}
           {limitView === "table" && (
             <div className="limitTableWrap" style={styles.limitTableWrap}>
-              <p style={styles.tableIntro}>Read down the columns: as the distance from <b>a</b> shrinks, do the left and right values settle on the same number?</p>
-              <table className="limitTable" style={styles.limitTable}><thead><tr><th>|x − a|</th><th>x from left</th><th>x from right</th></tr></thead><tbody>{tableRows.map((row) => <tr key={row.delta}><td>{row.delta}</td><td>{Number.isFinite(row.left) ? row.left.toFixed(4) : "undefined"}</td><td>{Number.isFinite(row.right) ? row.right.toFixed(4) : "undefined"}</td></tr>)}</tbody></table>
+              <p style={styles.tableIntro}>{isInfinity ? <>Read down the rows: as <b>x</b> grows without bound, does f(x) settle on a single number?</> : <>Read down the columns: as the distance from <b>a</b> shrinks, do the left and right values settle on the same number?</>}</p>
+              <table className="limitTable" style={styles.limitTable}>
+                <thead><tr>{isInfinity ? <><th>x</th><th>f(x)</th></> : <><th>|x − a|</th><th>x from left</th><th>x from right</th></>}</tr></thead>
+                <tbody>{tableRows.map((row) => isInfinity ? (
+                  <tr key={row.delta}><td>{row.delta}</td><td>{Number.isFinite(row.fx) ? row.fx.toFixed(4) : "undefined"}</td></tr>
+                ) : (
+                  <tr key={row.delta}><td>{row.delta}</td><td>{Number.isFinite(row.left) ? row.left.toFixed(4) : "undefined"}</td><td>{Number.isFinite(row.right) ? row.right.toFixed(4) : "undefined"}</td></tr>
+                ))}</tbody>
+              </table>
             </div>
           )}
           {limitView === "algebra" && <div style={styles.algebraView}><span style={styles.answerTag}>why this works</span><p>{algebra}</p><div style={styles.algebraRule}>{preset.kind === "hole" ? "0/0 after substitution → factor and cancel" : preset.kind === "jump" ? "left limit ≠ right limit → DNE" : isSqueeze ? "bounded between two limits → squeeze" : preset.kind === "infinite" ? "denominator → 0 → vertical asymptote" : preset.kind === "direct" ? "ordinary number after substitution → done" : preset.kind === "rationalize" ? "0/0 → multiply by the conjugate" : preset.kind === "infinity" ? "divide by the highest power of x" : "special trig limit → 1"}</div></div>}
-          <div style={styles.limitSliderLabel}><span>{direction === "both" ? `x = ${leftX.toFixed(3)} and ${rightX.toFixed(3)}` : `x = ${x.toFixed(3)}`}</span><span>approaching from the {leftRight}</span></div>
-          <input type="range" min="0" max="1" step="0.001" value={approach} onChange={(event) => setApproach(Number(event.target.value))} style={styles.slider} aria-label="Move x toward a" />
+          <div style={styles.limitSliderLabel}><span>{isInfinity ? `x = ${x.toFixed(3)}` : direction === "both" ? `x = ${leftX.toFixed(3)} and ${rightX.toFixed(3)}` : `x = ${x.toFixed(3)}`}</span><span>{isInfinity ? "x growing without bound" : `approaching from the ${leftRight}`}</span></div>
+          <input type="range" min="0" max="1" step="0.001" value={approach} onChange={(event) => setApproach(Number(event.target.value))} style={{ ...styles.slider, width: "100%" }} aria-label="Move x toward a" />
         </div>
         <aside style={styles.limitAnswer}>
           <span style={styles.answerTag}>{isSqueeze ? "the theorem" : "read the graph"}</span>
-          <div style={styles.limitEquation}>lim <i>x→{preset.at}</i> f(x) = <strong>{preset.limit}</strong></div>
+          <div style={styles.limitEquation}>lim <i>x→{isInfinity ? "∞" : preset.at}</i> f(x) = <strong>{preset.limit}</strong></div>
           <p style={styles.limitNote}>{preset.note}</p>
           {isSqueeze ? (
             <div style={styles.squeezeProof}><strong>Follow the trap</strong><span style={styles.squeezeProofSpan}>−x² ≤ x²·sin(1/x) ≤ x²</span><span>Both outside curves approach 0.</span><b>So the middle curve must approach 0.</b></div>
+          ) : isInfinity ? (
+            <div style={styles.limitCheck}><strong>End behavior</strong><span>Continuity is about a single point, so it does not apply out at infinity. What matters here is the horizontal asymptote the graph settles toward.</span></div>
           ) : (
             <div style={styles.limitCheck}><strong>Continuity check</strong><span>For continuity at a, the limit and the function value must agree.</span><span style={{ color: preset.value === preset.limit ? COLORS.mint : COLORS.coral, fontWeight: 700 }}>{preset.value === preset.limit ? "continuous here" : "not continuous here"}</span></div>
           )}
@@ -2052,7 +2066,7 @@ const styles = {
     background: "transparent", border: "none", cursor: "pointer",
     fontFamily: "'Inter', sans-serif", fontWeight: 600, fontSize: 13.5,
     color: "rgba(255,255,255,0.72)", padding: "13px 16px",
-    borderBottom: "3px solid transparent",
+    borderBottomWidth: 3, borderBottomStyle: "solid", borderBottomColor: "transparent",
   },
   navLinkActive: {
     color: "#fff", background: COLORS.navyDeep,
@@ -2100,7 +2114,7 @@ const styles = {
   presetRow: { display: "flex", gap: 6, flexWrap: "wrap", alignItems: "center" },
   presetLabel: { fontFamily: "'Inter', sans-serif", fontSize: 12, color: COLORS.inkDim, marginRight: 2 },
   chip: {
-    background: COLORS.card, border: `1px solid ${COLORS.border}`, color: COLORS.inkDim,
+    background: COLORS.card, borderWidth: 1, borderStyle: "solid", borderColor: COLORS.border, color: COLORS.inkDim,
     borderRadius: 8, padding: "6px 11px", fontSize: 12.5,
     fontFamily: "'IBM Plex Mono', monospace", cursor: "pointer",
   },
