@@ -1062,7 +1062,7 @@ export default function CalculusLab() {
   }, [mode, playing, cursorX, cursorY, slope, n, smooth, riemannSum, exactIntegral, accumNow, a, b, yLo, yHi, dyLo, dyHi, afLo, afHi]);
 
   return (
-    <div style={styles.app}>
+    <div className="calculusApp" style={styles.app}>
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@500;600;700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap');
         * { box-sizing: border-box; }
@@ -1149,35 +1149,65 @@ export default function CalculusLab() {
           .cl-term:hover .cl-tip, .cl-term:focus .cl-tip, .cl-term:focus-visible .cl-tip { animation: none; }
         }
         @media (max-width: 880px) {
+          .calculusApp { overflow-x: hidden; }
+          .bar { min-width: 0; }
+          .topbar .bar { padding-inline: 14px; }
+          .brandDiv, .brandSub { display: none; }
+          .navbar .bar { overflow-x: auto; padding-inline: 8px; }
+          .navLink { flex: 0 0 auto; padding-inline: 12px !important; }
+          .page { padding-inline: 12px !important; }
           .cl-layout { grid-template-columns: 1fr !important; }
           .cl-notes { order: 3; position: static !important; }
           .homeIntro { flex-direction: column; align-items: flex-start !important; }
           .homeTitle { font-size: 34px !important; }
-          .homeFormula { font-size: 18px !important; }
+          .homeFormula { align-self: flex-start; max-width: 100%; font-size: 18px !important; white-space: normal; flex-wrap: wrap; overflow-wrap: anywhere; }
           .starterGrid, .homeLowerGrid { grid-template-columns: 1fr !important; }
           .limitIntro, .limitLayout { grid-template-columns: 1fr !important; flex-direction: column !important; }
           .limitNotation { align-self: flex-start !important; }
           .limitPresetRow { overflow-x: auto; flex-wrap: nowrap !important; padding-bottom: 4px; }
           .limitPresetRow .cl-chip { white-space: nowrap; }
+          .limitTableWrap { overflow-x: auto; }
+          .limitTable { min-width: 420px; }
           .flashIntro { flex-direction: column; align-items: flex-start !important; }
+          .flashTitle { font-size: 28px !important; }
           .flashQuestion { font-size: 20px !important; }
-          .flashControls { flex-wrap: wrap; }
+          .flashCardButton { min-height: 310px; padding: 20px 16px !important; }
+          .flashAnswer { font-size: 16px !important; }
+          .flashFormula { font-size: 12px !important; overflow-wrap: anywhere; }
+          .flashControls { display: grid !important; grid-template-columns: 1fr auto 1fr; gap: 6px; }
+          .flashNav:first-child { justify-self: start; }
+          .flashNav:last-child { justify-self: end; }
+          .flashReveal { white-space: nowrap; padding-inline: 12px !important; }
+          .flashTip { flex-direction: column; align-items: flex-start; gap: 3px; }
+          .tabs { width: 100%; }
+          .tab { flex: 1; padding-inline: 8px !important; }
+          .statRow { flex-wrap: wrap !important; }
+          .statPill { flex: 1 1 calc(50% - 8px); min-width: 0; }
+        }
+        @media (max-width: 420px) {
+          .navLink { font-size: 12px !important; padding-inline: 10px !important; }
+          .flashCardTop { align-items: flex-start; }
+          .flashFlip { font-size: 9px !important; }
+          .flashControls { grid-template-columns: 1fr 1fr; }
+          .flashReveal { grid-column: 1 / -1; grid-row: 1; justify-self: center; }
+          .flashNav { grid-row: 2; }
+          .flashNav:last-child { grid-column: 2; }
         }
       `}</style>
 
       {/* bar 1 — wordmark */}
-      <div style={styles.topbar}>
-        <div style={styles.bar}>
+      <div className="topbar" style={styles.topbar}>
+        <div className="bar" style={styles.bar}>
           <span style={styles.brandMark}>∫ƒ′</span>
           <span style={styles.brand}>Calculus Lab</span>
-          <span style={styles.brandDiv}>|</span>
-          <span style={styles.brandSub}>Derivatives &amp; Integrals, visualized</span>
+          <span className="brandDiv" style={styles.brandDiv}>|</span>
+          <span className="brandSub" style={styles.brandSub}>Derivatives &amp; Integrals, visualized</span>
         </div>
       </div>
 
       {/* bar 2 — section nav */}
-      <nav style={styles.navbar}>
-        <div style={styles.bar}>
+      <nav className="navbar" style={styles.navbar}>
+        <div className="bar" style={styles.bar}>
           {["home", "limit", "flashcards", "derivative", "integral"].map((m) => (
             <button
               key={m}
@@ -1191,7 +1221,7 @@ export default function CalculusLab() {
         </div>
       </nav>
 
-      <main style={styles.page}>
+      <main className="page" style={styles.page}>
         {activeTab === "home" ? (
           <HomeScreen onOpenLab={openLab} onOpenLimits={openLimits} onOpenFlashcards={openFlashcards} onSelectPreset={selectHomePreset} />
         ) : activeTab === "limit" ? (
@@ -1616,9 +1646,9 @@ function Dot({ c }) {
    so the surrounding paragraph never reflows while the animation runs. */
 function StatRow({ stats }) {
   return (
-    <div style={styles.statRow}>
+    <div className="statRow" style={styles.statRow}>
       {stats.map((s) => (
-        <div key={s.label} style={styles.statPill}>
+        <div className="statPill" key={s.label} style={styles.statPill}>
           <div style={styles.statLabel}>{s.label}</div>
           <div className="cl-stat-value" style={styles.statValue}>{s.value}</div>
         </div>
@@ -1659,12 +1689,12 @@ function FlashcardsScreen() {
         <span style={flipped ? styles.flashAnswer : styles.flashQuestion}>{flipped ? card.answer : card.prompt}</span>
         <span style={styles.flashFormula}>{card.formula}</span>
       </button>
-      <div style={styles.flashControls}>
+      <div className="flashControls" style={styles.flashControls}>
         <button className="cl-btn" onClick={() => move(-1)} style={styles.flashNav}>← Previous</button>
         <button className="cl-btn" onClick={() => setFlipped((value) => !value)} style={styles.flashReveal}>{flipped ? "Show question" : "Reveal answer"}</button>
         <button className="cl-btn" onClick={() => move(1)} style={styles.flashNav}>Next →</button>
       </div>
-      <div style={styles.flashTip}><strong>Study move</strong><span>Before flipping, say the definition, sketch the idea, or name the rule you would use.</span></div>
+      <div className="flashTip" style={styles.flashTip}><strong>Study move</strong><span>Before flipping, say the definition, sketch the idea, or name the rule you would use.</span></div>
     </section>
   );
 }
@@ -1794,9 +1824,9 @@ function LimitScreen() {
             <text x={isInfinity ? W - pad.r : xToPx(preset.at)} y={H - 12} textAnchor={isInfinity ? "end" : "middle"} fill={COLORS.violet} fontSize="11" fontFamily="IBM Plex Mono, monospace">{isInfinity ? "x → ∞" : `a = ${preset.at}`}</text>
           </svg>}
           {limitView === "table" && (
-            <div style={styles.limitTableWrap}>
+            <div className="limitTableWrap" style={styles.limitTableWrap}>
               <p style={styles.tableIntro}>Read down the columns: as the distance from <b>a</b> shrinks, do the left and right values settle on the same number?</p>
-              <table style={styles.limitTable}><thead><tr><th>|x − a|</th><th>x from left</th><th>x from right</th></tr></thead><tbody>{tableRows.map((row) => <tr key={row.delta}><td>{row.delta}</td><td>{Number.isFinite(row.left) ? row.left.toFixed(4) : "undefined"}</td><td>{Number.isFinite(row.right) ? row.right.toFixed(4) : "undefined"}</td></tr>)}</tbody></table>
+              <table className="limitTable" style={styles.limitTable}><thead><tr><th>|x − a|</th><th>x from left</th><th>x from right</th></tr></thead><tbody>{tableRows.map((row) => <tr key={row.delta}><td>{row.delta}</td><td>{Number.isFinite(row.left) ? row.left.toFixed(4) : "undefined"}</td><td>{Number.isFinite(row.right) ? row.right.toFixed(4) : "undefined"}</td></tr>)}</tbody></table>
             </div>
           )}
           {limitView === "algebra" && <div style={styles.algebraView}><span style={styles.answerTag}>why this works</span><p>{algebra}</p><div style={styles.algebraRule}>{preset.kind === "hole" ? "0/0 after substitution → factor and cancel" : preset.kind === "jump" ? "left limit ≠ right limit → DNE" : isSqueeze ? "bounded between two limits → squeeze" : preset.kind === "infinite" ? "denominator → 0 → vertical asymptote" : preset.kind === "direct" ? "ordinary number after substitution → done" : preset.kind === "rationalize" ? "0/0 → multiply by the conjugate" : preset.kind === "infinity" ? "divide by the highest power of x" : "special trig limit → 1"}</div></div>}
