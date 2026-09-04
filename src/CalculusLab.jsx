@@ -234,7 +234,11 @@ const FLASHCARDS = [
   { category: "Limits", prompt: "What does the indeterminate form 0/0 indicate after direct substitution?", answer: "It does not determine the limit. Use algebraic techniques, such as factoring, canceling common factors, or rationalizing, to analyze the limiting behavior.", formula: "0/0 → further analysis" },
   { category: "Limits", prompt: <>How should you interpret <LimitNotation target="0" /> when f(x) = 1/x²?</>, answer: "As x approaches 0 from either side, 1/x² increases without bound. Thus the function has an infinite limit and a vertical asymptote at x = 0.", formula: "lim x→0 1/x² = +∞" },
   { category: "Limits", prompt: "What conditions must hold for f to be continuous at x = a?", answer: "f(a) must be defined, the limit of f(x) as x approaches a must exist, and that limit must equal f(a).", formula: "f(a) exists; lim f exists; lim f = f(a)" },
-  { category: "Limits", prompt: "State the Squeeze Theorem.", answer: "If g(x) ≤ f(x) ≤ h(x) near a, and g(x) and h(x) approach the same limit L as x approaches a, then f(x) also approaches L.", formula: "g(x) ≤ f(x) ≤ h(x)" },
+  { category: "Limits", prompt: "State the Squeeze Theorem.", answer: "If g(x) ≤ f(x) ≤ h(x) on an open interval containing a (except possibly at a itself), and g(x) and h(x) both approach the same limit L as x approaches a, then f(x) is trapped between them and must approach L too.", formula: "g(x) ≤ f(x) ≤ h(x)" },
+  { category: "Limits", prompt: "What does the Intermediate Value Theorem guarantee?", answer: "If f is continuous on [a,b] and k is any value between f(a) and f(b), then f(c) = k for at least one c in [a,b]. A continuous function cannot skip over a value without passing through it somewhere in between.", formula: "f(a) < k < f(b) ⇒ f(c) = k for some c in [a,b]" },
+  { category: "Limits", prompt: "How do you evaluate a limit at infinity for a rational function?", answer: "Compare the degrees of the numerator and denominator. If they are equal, the limit is the ratio of the leading coefficients. If the denominator's degree is larger, the limit is 0. If the numerator's degree is larger, the limit is infinite.", formula: "equal degrees → ratio of leading coefficients" },
+  { category: "Limits", prompt: "Evaluate lim x→3 (x² − 9)/(x − 3).", answer: "Direct substitution gives 0/0. Factor the numerator as (x − 3)(x + 3), cancel the common factor, then substitute x = 3 into what remains.", formula: "lim x→3 (x²−9)/(x−3) = 6" },
+  { category: "Limits", prompt: "Where is the hole in (x³ − 1)/(x − 1)?", answer: "Factor x³ − 1 as (x − 1)(x² + x + 1), cancel the common factor for the nearby behavior, then evaluate the simplified function at x = 1. The hole is at (1, 3).", formula: "x³−1=(x−1)(x²+x+1)" },
   { category: "Derivatives", prompt: "What does the derivative represent?", answer: "The derivative represents the instantaneous rate of change of a function. Geometrically, it is the slope of the tangent line at a point.", formula: "f′(a) = tangent slope at x = a" },
   { category: "Derivatives", prompt: "How is the derivative defined as a limit?", answer: "The derivative is the limit of the secant slope as the second point approaches the first. This limiting difference quotient gives the slope of the tangent line.", formula: "f′(x) = lim h→0 [f(x+h) − f(x)]/h" },
   { category: "Derivatives", prompt: "State the Power Rule.", answer: "For a constant exponent n, multiply by n and decrease the exponent by 1.", formula: "d/dx[xⁿ] = n·xⁿ⁻¹" },
@@ -243,7 +247,10 @@ const FLASHCARDS = [
   { category: "Derivatives", prompt: "When is the Chain Rule used?", answer: "Use the Chain Rule to differentiate a composite function. Differentiate the outer function, evaluated at the inner function, and multiply by the derivative of the inner function.", formula: "d/dx[f(g(x))] = f′(g(x))g′(x)" },
   { category: "Derivatives", prompt: "What signs must you remember for the derivatives of sine and cosine?", answer: "The derivative of sin x is cos x. The derivative of cos x is −sin x; the negative sign is the common error.", formula: "(sin x)′ = cos x; (cos x)′ = −sin x" },
   { category: "Derivatives", prompt: "What is a critical number?", answer: "A critical number c is a number in the domain of f for which f′(c) = 0 or f′(c) does not exist. Critical numbers are candidates for local extrema.", formula: "f′(c) = 0 or undefined" },
+  { category: "Derivatives", prompt: "What does Rolle's Theorem state?", answer: "If f is continuous on [a,b], differentiable on (a,b), and f(a) = f(b), then f′(c) = 0 for at least one c in (a,b). It is the special case of the Mean Value Theorem where both endpoints sit at the same height.", formula: "f(a) = f(b) ⇒ f′(c) = 0 for some c in (a,b)" },
   { category: "Derivatives", prompt: "What does the Mean Value Theorem guarantee?", answer: "If f is continuous on [a,b] and differentiable on (a,b), at least one c in (a,b) has an instantaneous slope equal to the average slope on [a,b].", formula: "f′(c) = [f(b) − f(a)]/(b − a)" },
+  { category: "Derivatives", prompt: "Differentiate f(x) = x³·sin x.", answer: "Apply the Product Rule: derivative of the first factor times the second, plus the first factor times the derivative of the second.", formula: "f′(x) = 3x²·sin x + x³·cos x" },
+  { category: "Derivatives", prompt: "Differentiate f(x) = sin(x²).", answer: "The outer function is sin(·) and the inner function is x². Differentiate the outside function, leave the inside alone, then multiply by the derivative of the inside.", formula: "f′(x) = cos(x²) · 2x" },
   { category: "Integrals", prompt: "What does a definite integral represent?", answer: "A definite integral represents accumulated signed area: contributions above the x-axis are positive and contributions below the x-axis are negative.", formula: "∫ₐᵇ f(x) dx" },
   { category: "Integrals", prompt: "What is an antiderivative?", answer: "An antiderivative of f is a function F whose derivative is f. Thus integration reverses differentiation.", formula: "F′(x) = f(x)" },
   { category: "Integrals", prompt: "State the Fundamental Theorem of Calculus for evaluating a definite integral.", answer: "If F is an antiderivative of f on [a,b], then the definite integral equals F(b) − F(a).", formula: "∫ₐᵇ f(x) dx = F(b) − F(a)" },
@@ -251,6 +258,9 @@ const FLASHCARDS = [
   { category: "Integrals", prompt: "State the Reverse Power Rule.", answer: "For n ≠ −1, increase the exponent by 1 and divide by the new exponent. Add the constant of integration C.", formula: "∫xⁿ dx = xⁿ⁺¹/(n+1) + C" },
   { category: "Integrals", prompt: "Why must an indefinite integral include a constant C?", answer: "Differentiation removes constants, so every function F(x) + C has the same derivative. The constant represents the entire family of antiderivatives.", formula: "∫f(x) dx = F(x) + C" },
   { category: "Integrals", prompt: "Why is ∫(1/x) dx not found with the Reverse Power Rule?", answer: "The exponent is −1, and increasing it by 1 would make the denominator zero. This exception integrates to the natural logarithm of the absolute value.", formula: "∫(1/x) dx = ln|x| + C" },
+  { category: "Integrals", prompt: "When should you try integration by substitution, and what do you substitute?", answer: "Look for a function and its derivative both appearing in the integrand (up to a constant factor). Let u equal the inner function, so du replaces the matching derivative piece, turning the integral into a simpler one written in terms of u.", formula: "∫f(g(x))·g′(x) dx = ∫f(u) du, where u = g(x)" },
+  { category: "Integrals", prompt: "Evaluate ∫ 2x·(x² + 1)³ dx using substitution.", answer: "Let u = x² + 1, so du = 2x dx — exactly the factor sitting next to the power. The integral becomes ∫u³ du = u⁴/4 + C. Substitute x² + 1 back in for u.", formula: "∫2x(x²+1)³ dx = (x²+1)⁴/4 + C" },
+  { category: "Integrals", prompt: "Evaluate ∫₀² 3x² dx.", answer: "Find an antiderivative of 3x², which is x³. Apply the Fundamental Theorem by evaluating it at the top limit and subtracting its value at the bottom limit.", formula: "∫₀² 3x² dx = 2³ − 0³ = 8" },
   { category: "Limits", prompt: "For a rational function, how do you distinguish a hole from a vertical asymptote?", answer: "Factor first. If every denominator factor causing the zero cancels, the original function has a hole at that input. If a denominator factor remains while the numerator is nonzero, the function has a vertical asymptote there.", formula: "factor cancels completely → hole; factor remains → asymptote" },
   { category: "Algebra", prompt: "What is a conjugate, and why does it help with limits?", answer: "It flips the sign between two terms, such as √(x+4)−2 to √(x+4)+2. Multiplying by it creates a difference of squares and removes the radical difference.", formula: "(a−b)(a+b)=a²−b²" },
   { category: "Algebra", prompt: "How does the difference of cubes factor?", answer: "A³−B³ has one linear factor and a separate quadratic factor. It is not three copies of A−B.", formula: "A³−B³=(A−B)(A²+AB+B²)" },
@@ -258,9 +268,10 @@ const FLASHCARDS = [
   { category: "Algebra", prompt: "How should you expand the square of a binomial?", answer: "Use the distributive property or the binomial identity. The middle term cannot be omitted.", formula: "(a+b)² = a² + 2ab + b²" },
   { category: "Algebra", prompt: "How do you add rational expressions with unlike denominators?", answer: "Rewrite each expression using a common denominator, combine the numerators, and then simplify. Do not add the denominators.", formula: "a/b + c/d = (ad+bc)/bd" },
   { category: "Algebra", prompt: "What does a negative exponent mean?", answer: "A negative exponent indicates a reciprocal. Move the corresponding factor across the fraction bar and change the sign of its exponent.", formula: "x⁻ⁿ = 1/xⁿ" },
-  { category: "Algebra", prompt: "How does the difference of squares factor?", answer: "Use the sum-and-difference pattern. This factorization is often used to simplify a limit.", formula: "a²−b² = (a−b)(a+b)" },
-  { category: "Applications", prompt: "Where is the hole in (x³−1)/(x−1)?", answer: "Factor x³−1 as (x−1)(x²+x+1), cancel only for nearby behavior, then evaluate the simplified function at x=1. The hole is at (1,3).", formula: "x³−1=(x−1)(x²+x+1)" },
+  { category: "Algebra", prompt: "Does a² + b² factor the way a² − b² does?", answer: "No. The difference of squares factors neatly as (a−b)(a+b), but the sum of squares does not factor over the real numbers. Treating a²+b² like a difference of squares is a common and incorrect shortcut.", formula: "a²−b²=(a−b)(a+b), but a²+b² does not factor (over ℝ)" },
   { category: "Applications", prompt: "How do you find the average rate of change of f on [a,b]?", answer: "Subtract the function values and divide by the change in the input. This is the slope of a secant line, not the instantaneous derivative.", formula: "[f(b)−f(a)]/(b−a)" },
+  { category: "Applications", prompt: "What are the basic steps for solving an optimization problem?", answer: "Write a formula for the quantity you want to maximize or minimize, use a given constraint to rewrite it in one variable, find the critical numbers of that formula, then check the critical numbers and endpoints to see which gives the max or min.", formula: "optimize → one variable → f′ = 0 → check candidates" },
+  { category: "Applications", prompt: "What is the general strategy for a related rates problem?", answer: "Write an equation relating the changing quantities, then differentiate both sides with respect to time using the Chain Rule. Substitute the known numerical values only after differentiating, never before.", formula: "d/dt[equation] relates the rates of change" },
 ];
 
 /* ---- superscripts + friendlier symbols for rendered math ---- */
@@ -1676,11 +1687,30 @@ function FlashcardsScreen() {
   const [category, setCategory] = useState("All");
   const [cardIndex, setCardIndex] = useState(0);
   const [flipped, setFlipped] = useState(false);
-  const categories = ["All", "Foundations", "Limits", "Derivatives", "Integrals", "Algebra", "Applications"];
+  const categories = ["All", "Limits", "Derivatives", "Integrals", "Algebra", "Applications"];
   const cards = category === "All" ? FLASHCARDS : FLASHCARDS.filter((card) => card.category === category);
   const card = cards[cardIndex % cards.length];
   const move = (step) => { setCardIndex((index) => (index + step + cards.length) % cards.length); setFlipped(false); };
   const changeCategory = (next) => { setCategory(next); setCardIndex(0); setFlipped(false); };
+
+  if (!card) {
+    return (
+      <section style={styles.flashcards} aria-labelledby="flashcards-title">
+        <div className="flashIntro" style={styles.flashIntro}>
+          <div>
+            <div style={styles.homeKicker}>CALCULUS I · QUICK REVIEW</div>
+            <h1 id="flashcards-title" style={styles.flashTitle}>Build the connections.</h1>
+          </div>
+        </div>
+        <div style={styles.flashToolbar}>
+          <div style={styles.flashFilters} aria-label="Flashcard topics">
+            {categories.map((item) => <button key={item} className="cl-chip" onClick={() => changeCategory(item)} style={{ ...styles.chip, ...(category === item ? styles.chipActive : {}) }}>{item}</button>)}
+          </div>
+        </div>
+        <p style={styles.homeLead}>No cards in this category yet.</p>
+      </section>
+    );
+  }
 
   return (
     <section style={styles.flashcards} aria-labelledby="flashcards-title">
