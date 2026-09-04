@@ -1742,6 +1742,7 @@ function LimitScreen() {
   const yAtX = evaluate(x);
   const yAtLeft = evaluate(leftX);
   const yAtRight = evaluate(rightX);
+  const formatFx = (value) => Number.isFinite(value) ? value.toFixed(4) : "undefined";
   const W = 720, H = 330, pad = { l: 52, r: 24, t: 24, b: 42 };
   const isSqueeze = preset.kind === "squeeze";
   const yMin = preset.kind === "infinite" ? -1 : preset.kind === "jump" ? -2 : isSqueeze ? -0.12 : preset.kind === "infinity" ? 0.5 : preset.kind === "direct" ? -2 : -1.5;
@@ -1857,7 +1858,10 @@ function LimitScreen() {
             </div>
           )}
           {limitView === "algebra" && <div style={styles.algebraView}><span style={styles.answerTag}>why this works</span><p>{algebra}</p><div style={styles.algebraRule}>{preset.kind === "hole" ? "0/0 after substitution → factor and cancel" : preset.kind === "jump" ? "left limit ≠ right limit → DNE" : isSqueeze ? "bounded between two limits → squeeze" : preset.kind === "infinite" ? "denominator → 0 → vertical asymptote" : preset.kind === "direct" ? "ordinary number after substitution → done" : preset.kind === "rationalize" ? "0/0 → multiply by the conjugate" : preset.kind === "infinity" ? "divide by the highest power of x" : "special trig limit → 1"}</div></div>}
-          <div style={styles.limitSliderLabel}><span>{isInfinity ? `x = ${x.toFixed(3)}` : direction === "both" ? `x = ${leftX.toFixed(3)} and ${rightX.toFixed(3)}` : `x = ${x.toFixed(3)}`}</span><span>{isInfinity ? "x growing without bound" : `approaching from the ${leftRight}`}</span></div>
+          <div style={styles.limitSliderLabel}>
+            <span>{isInfinity ? `x = ${x.toFixed(3)} → f(x) = ${formatFx(yAtX)}` : direction === "both" ? `x = ${leftX.toFixed(3)} → f(x) = ${formatFx(yAtLeft)}   |   x = ${rightX.toFixed(3)} → f(x) = ${formatFx(yAtRight)}` : `x = ${x.toFixed(3)} → f(x) = ${formatFx(yAtX)}`}</span>
+            <span>{isInfinity ? "x growing without bound" : `approaching from the ${leftRight}`}</span>
+          </div>
           <input type="range" min="0" max="1" step="0.001" value={approach} onChange={(event) => setApproach(Number(event.target.value))} style={{ ...styles.slider, width: "100%" }} aria-label="Move x toward a" />
         </div>
         <aside style={styles.limitAnswer}>
