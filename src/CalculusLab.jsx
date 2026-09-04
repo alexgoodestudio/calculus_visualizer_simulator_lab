@@ -194,6 +194,58 @@ const INT_RULES = [
   { key: "riemann sum", name: "Riemann Sum", formula: "∫ₐᵇ f dx ≈ Σ f(xᵢ)·Δx", when: "No elementary antiderivative — approximate with thin columns.", example: "more, thinner columns → closer to the exact area" },
 ];
 
+const CALCULUS_I_BIG_IDEAS = [
+  { name: "Derivative definition", formula: "f′(x) = lim h→0 [f(x+h) − f(x)] / h", text: "A derivative is the slope of the tangent line, found by bringing a secant line's two points together." },
+  { name: "Continuity", formula: "lim x→a f(x) = f(a)", text: "A function is continuous at a when its nearby values settle on the value at a: no hole, jump, or break." },
+  { name: "Mean Value Theorem", formula: "f′(c) = [f(b) − f(a)] / (b − a)", text: "For a smooth curve, some point has the same instantaneous slope as the average slope across the whole interval." },
+  { name: "Fundamental Theorem", formula: "∫ₐᵇ f(x) dx = F(b) − F(a)", text: "Differentiation and integration undo each other: an antiderivative turns accumulated area into a subtraction." },
+];
+
+const LIMIT_PRESETS = [
+  { label: "hole", kind: "hole", name: "A removable hole", expr: "(x^2 - 1)/(x - 1)", at: 1, domain: [0, 2], limit: "2", value: "undefined", note: "The nearby values approach 2, even though the function is not defined at x = 1." },
+  { label: "jump", kind: "jump", name: "A jump", expr: "x < 0 ? -1 : 1", at: 0, domain: [-2, 2], limit: "does not exist", value: "1", note: "The left and right sides approach different heights, so there is no two-sided limit." },
+  { label: "infinite", kind: "infinite", name: "An infinite limit", expr: "1/x^2", at: 0, domain: [-2, 2], limit: "+∞", value: "undefined", note: "The values grow without bound as x approaches 0 from either side." },
+  { label: "trig", kind: "trig", name: "A classic trig limit", expr: "sin(x)/x", at: 0, domain: [-6, 6], limit: "1", value: "undefined", note: "The curve approaches 1 from both sides, even though the expression is undefined at x = 0." },
+  { label: "squeeze", kind: "squeeze", name: "Squeeze theorem", expr: "x²·sin(1/x)", at: 0, domain: [-0.32, 0.32], limit: "0", value: "undefined", note: "Zoom in near x = 0: the oscillating function stays trapped between −x² and x², and both bounds approach 0." },
+  { label: "direct", kind: "direct", name: "Direct substitution", expr: "x^2 + 3*x - 1", at: 2, domain: [0, 4], limit: "9", value: "9", note: "Substitution gives an ordinary number, so the limit is found immediately." },
+  { label: "rationalize", kind: "rationalize", name: "Rationalize a root", expr: "(sqrt(x + 4) - 2)/x", at: 0, domain: [-1, 3], limit: "1/4", value: "undefined", note: "Substitution gives 0/0. Multiplying by the conjugate reveals the nearby value 1/4." },
+  { label: "infinity", kind: "infinity", name: "A limit at infinity", expr: "(2*x^2 + 1)/(x^2 - 3)", at: 10, domain: [1, 10], limit: "2", value: "undefined", note: "As x travels far right, the graph settles toward the horizontal asymptote y = 2." },
+];
+
+const FLASHCARDS = [
+  { category: "Limits", prompt: "How would you read lim x→a f(x) in plain English?", answer: "As x gets close to a, what value does f(x) get close to? The arrow means approaches, not equals.", formula: "lim x→a f(x) = L" },
+  { category: "Limits", prompt: "What is the difference between f(a) and lim x→a f(x)?", answer: "f(a) is the value assigned at a. The limit describes nearby behavior, so it can exist even when f(a) is missing or different.", formula: "nearby behavior ≠ assigned value" },
+  { category: "Limits", prompt: "When does a two-sided limit exist?", answer: "The left-hand and right-hand limits must both exist and agree. If they disagree, the two-sided limit does not exist.", formula: "lim x→a− f(x) = lim x→a+ f(x)" },
+  { category: "Limits", prompt: "What does 0/0 tell you after direct substitution?", answer: "It is indeterminate, not the answer. Try algebra such as factoring, canceling, or rationalizing to reveal the nearby behavior.", formula: "0/0 → investigate" },
+  { category: "Limits", prompt: "How would you read lim x→0 1/x² in plain English?", answer: "As x approaches 0 from either side, 1/x² grows without bound. This is an infinite limit and x = 0 is a vertical asymptote.", formula: "lim x→0 1/x² = +∞" },
+  { category: "Limits", prompt: "What are the three checks for continuity at x = a?", answer: "The function is defined at a, the limit exists, and the limit equals the function value.", formula: "f(a) exists; lim f exists; lim f = f(a)" },
+  { category: "Limits", prompt: "What does the Squeeze Theorem say?", answer: "If a function stays between two functions that approach the same limit, the middle function must approach that limit too.", formula: "g(x) ≤ f(x) ≤ h(x)" },
+  { category: "Derivatives", prompt: "What does the derivative measure?", answer: "The instantaneous rate of change: geometrically, the slope of the tangent line at a point.", formula: "f′(a) = tangent slope at x = a" },
+  { category: "Derivatives", prompt: "How is the derivative defined using a limit?", answer: "Start with a secant slope, then let the second point move toward the first. The difference quotient becomes the tangent slope.", formula: "f′(x) = lim h→0 [f(x+h) − f(x)]/h" },
+  { category: "Derivatives", prompt: "What is the power rule?", answer: "Bring the exponent down as a multiplier, then reduce the exponent by one.", formula: "d/dx[xⁿ] = n·xⁿ⁻¹" },
+  { category: "Derivatives", prompt: "When do you use the chain rule?", answer: "When one function is nested inside another. Differentiate the outside, keep the inside, then multiply by the inside derivative.", formula: "d/dx[f(g(x))] = f′(g(x))g′(x)" },
+  { category: "Derivatives", prompt: "What does a critical number tell you?", answer: "It is a candidate for a local maximum or minimum: f′(c) is zero or undefined, while c is in the domain.", formula: "f′(c) = 0 or undefined" },
+  { category: "Derivatives", prompt: "What does the Mean Value Theorem connect?", answer: "For a continuous, differentiable function, some instantaneous slope equals the average slope over the interval.", formula: "f′(c) = [f(b) − f(a)]/(b − a)" },
+  { category: "Integrals", prompt: "What is a definite integral measuring?", answer: "Accumulated signed area: pieces above the x-axis count positive and pieces below count negative.", formula: "∫ₐᵇ f(x) dx" },
+  { category: "Integrals", prompt: "What is an antiderivative?", answer: "A function whose derivative is the original function. Integration reverses differentiation.", formula: "F′(x) = f(x)" },
+  { category: "Integrals", prompt: "What does the Fundamental Theorem of Calculus say?", answer: "It connects accumulation and derivatives: evaluate an antiderivative at the endpoints and subtract.", formula: "∫ₐᵇ f(x) dx = F(b) − F(a)" },
+  { category: "Integrals", prompt: "What is a Riemann sum?", answer: "An area estimate made by adding thin rectangles. More, thinner rectangles generally give a closer estimate.", formula: "Σ f(xᵢ)Δx → ∫ₐᵇ f(x) dx" },
+  { category: "Integrals", prompt: "What is the reverse power rule?", answer: "Raise the power by one and divide by the new power, except when the original power is −1.", formula: "∫xⁿ dx = xⁿ⁺¹/(n+1) + C" },
+  { category: "Foundations", prompt: "What is the difference between velocity and distance traveled?", answer: "Velocity is a rate at an instant. Distance is the accumulated total produced by that rate over time.", formula: "velocity → rate; distance → accumulation" },
+  { category: "Foundations", prompt: "What does elevation mean in a function model?", answer: "It is simply the output value f(x), interpreted as height or elevation at the input x.", formula: "elevation at x = f(x)" },
+  { category: "Foundations", prompt: "What does the differential dx or dt communicate?", answer: "It identifies the variable changing in an accumulation or derivative. In an intuitive model, it represents a very small change in that variable.", formula: "dx = small change in x" },
+  { category: "Foundations", prompt: "What do the numbers on a definite integral mean?", answer: "They are the limits of integration: the starting and stopping inputs for the accumulation.", formula: "∫ₐᵇ f(x) dx: start a, stop b" },
+  { category: "Foundations", prompt: "How are derivatives and integrals related?", answer: "A derivative turns position into a rate of change. An integral reverses that direction by accumulating a rate into a total; the FTC connects them.", formula: "position ⇄ rate ⇄ accumulation" },
+  { category: "Limits", prompt: "What do ε and δ measure in the formal limit definition?", answer: "Epsilon controls the allowed output error, while delta controls how close the input must be to the target to guarantee it.", formula: "|f(x)−L| < ε when 0 < |x−c| < δ" },
+  { category: "Limits", prompt: "How should you analyze a composite limit such as sin(1/x) as x→0?", answer: "Start with the inside: 1/x grows without bound. Then ask whether the outside function settles down; sine keeps oscillating, so the limit does not exist.", formula: "inside behavior → outside behavior" },
+  { category: "Limits", prompt: "How do you tell a hole from a vertical asymptote?", answer: "If numerator and denominator both become zero, a shared factor may produce a hole. If only the denominator becomes zero, the function can blow up at a vertical asymptote.", formula: "0/0 → possible hole; nonzero/0 → asymptote" },
+  { category: "Algebra", prompt: "What is a conjugate, and why does it help with limits?", answer: "It flips the sign between two terms, such as √(x+4)−2 to √(x+4)+2. Multiplying by it creates a difference of squares and removes the radical difference.", formula: "(a−b)(a+b)=a²−b²" },
+  { category: "Algebra", prompt: "How does the difference of cubes factor?", answer: "A³−B³ has one linear factor and a separate quadratic factor. It is not three copies of A−B.", formula: "A³−B³=(A−B)(A²+AB+B²)" },
+  { category: "Applications", prompt: "Estimate versus exact integral: should they match?", answer: "No. A rectangle sum is an estimate. As the rectangles become thinner and more numerous, the estimates converge toward the exact integral.", formula: "Σ f(xᵢ)Δx → ∫ₐᵇ f(x) dx" },
+  { category: "Applications", prompt: "Where is the hole in (x³−1)/(x−1)?", answer: "Factor x³−1 as (x−1)(x²+x+1), cancel only for nearby behavior, then evaluate the simplified function at x=1. The hole is at (1,3).", formula: "x³−1=(x−1)(x²+x+1)" },
+  { category: "Applications", prompt: "What is the secant slope between (9, f(9)) and (x, f(x))?", answer: "Subtract the two output values and divide by the change in input. It is an average rate of change, not yet the instantaneous derivative.", formula: "m=[f(x)−f(9)]/(x−9)" },
+];
+
 /* ---- superscripts + friendlier symbols for rendered math ---- */
 const SUP = { "-": "⁻", 0: "⁰", 1: "¹", 2: "²", 3: "³", 4: "⁴", 5: "⁵", 6: "⁶", 7: "⁷", 8: "⁸", 9: "⁹" };
 function toSup(d) { return String(d).split("").map((c) => SUP[c] ?? c).join(""); }
@@ -718,6 +770,7 @@ function RulesToolbox({ mode, activeKeys }) {
 }
 
 export default function CalculusLab() {
+  const [activeTab, setActiveTab] = useState("home");
   const [exprInput, setExprInput] = useState("x^2");
   const [domain, setDomain] = useState([-4, 4]);
   const [activePreset, setActivePreset] = useState("x²");
@@ -803,6 +856,10 @@ export default function CalculusLab() {
 
   const setModeAndReset = (m) => { setMode(m); handleReset(); };
   const setDerivAnimAndReset = (m) => { setDerivAnim(m); handleReset(); };
+  const openLab = (m) => { setModeAndReset(m); setActiveTab(m); };
+  const openLimits = () => setActiveTab("limit");
+  const openFlashcards = () => setActiveTab("flashcards");
+  const selectHomePreset = (preset, m) => { selectPreset(preset); openLab(m); };
 
   const curvePts = useMemo(() => (fn ? sample(fn, a, b) : []), [fn, a, b]);
   const [yLo, yHi] = useMemo(() => yExtent(curvePts), [curvePts]);
@@ -1007,6 +1064,11 @@ export default function CalculusLab() {
         .cl-btn { transition: background .15s ease, transform .1s ease, box-shadow .15s ease; }
         .cl-btn:active { transform: translateY(1px); }
         .cl-chip:hover { transform: translateY(-1px); }
+        .homeStarter { transition: transform .15s ease, border-color .15s ease, box-shadow .15s ease; }
+        .homeStarter:hover { transform: translateY(-3px); border-color: ${COLORS.violet} !important; box-shadow: 0 12px 26px rgba(18,58,94,0.13) !important; }
+        .limitTable th, .limitTable td { border-bottom: 1px solid ${COLORS.border}; padding: 10px 8px; text-align: right; }
+        .limitTable th { color: ${COLORS.inkDim}; font-family: 'Inter', sans-serif; font-size: 11px; font-weight: 600; }
+        .limitTable td:first-child, .limitTable th:first-child { text-align: left; color: ${COLORS.violet}; }
         input[type=range] { -webkit-appearance: none; appearance: none; height: 5px; border-radius: 3px; background: ${COLORS.border}; }
         input[type=range]::-webkit-slider-thumb {
           -webkit-appearance: none; width: 16px; height: 16px; border-radius: 50%;
@@ -1080,6 +1142,17 @@ export default function CalculusLab() {
         @media (max-width: 880px) {
           .cl-layout { grid-template-columns: 1fr !important; }
           .cl-notes { order: 3; position: static !important; }
+          .homeIntro { flex-direction: column; align-items: flex-start !important; }
+          .homeTitle { font-size: 34px !important; }
+          .homeFormula { font-size: 18px !important; }
+          .starterGrid, .homeLowerGrid { grid-template-columns: 1fr !important; }
+          .limitIntro, .limitLayout { grid-template-columns: 1fr !important; flex-direction: column !important; }
+          .limitNotation { align-self: flex-start !important; }
+          .limitPresetRow { overflow-x: auto; flex-wrap: nowrap !important; padding-bottom: 4px; }
+          .limitPresetRow .cl-chip { white-space: nowrap; }
+          .flashIntro { flex-direction: column; align-items: flex-start !important; }
+          .flashQuestion { font-size: 20px !important; }
+          .flashControls { flex-wrap: wrap; }
         }
       `}</style>
 
@@ -1096,20 +1169,27 @@ export default function CalculusLab() {
       {/* bar 2 — section nav */}
       <nav style={styles.navbar}>
         <div style={styles.bar}>
-          {["derivative", "integral"].map((m) => (
+          {["home", "limit", "flashcards", "derivative", "integral"].map((m) => (
             <button
               key={m}
               className="cl-tab"
-              onClick={() => setModeAndReset(m)}
-              style={{ ...styles.navLink, ...(mode === m ? styles.navLinkActive : {}) }}
+              onClick={() => m === "home" ? setActiveTab("home") : m === "limit" ? setActiveTab("limit") : m === "flashcards" ? setActiveTab("flashcards") : openLab(m)}
+              style={{ ...styles.navLink, ...(activeTab === m ? styles.navLinkActive : {}) }}
             >
-              {m === "derivative" ? "Derivatives" : "Integrals"}
+              {m === "home" ? "Home" : m === "limit" ? "Limits" : m === "flashcards" ? "Flashcards" : m === "derivative" ? "Derivatives" : "Integrals"}
             </button>
           ))}
         </div>
       </nav>
 
       <main style={styles.page}>
+        {activeTab === "home" ? (
+          <HomeScreen onOpenLab={openLab} onOpenLimits={openLimits} onOpenFlashcards={openFlashcards} onSelectPreset={selectHomePreset} />
+        ) : activeTab === "limit" ? (
+          <LimitScreen />
+        ) : activeTab === "flashcards" ? (
+          <FlashcardsScreen />
+        ) : <>
         <h1 style={styles.pageTitle}>
           {mode === "derivative"
             ? "Derivatives — the slope of a curve, point by point"
@@ -1399,6 +1479,21 @@ export default function CalculusLab() {
                   <span style={styles.answerTag}>answer</span>
                   <span style={styles.answerMath}>{work.answer}</span>
                 </div>
+                <div style={styles.bigIdeas}>
+                  <div style={styles.bigIdeasHead}>
+                    <span style={styles.bigIdeasTag}>CALCULUS I BIG IDEAS</span>
+                    <span style={styles.bigIdeasHint}>keep these connections handy</span>
+                  </div>
+                  <div style={styles.bigIdeasGrid}>
+                    {CALCULUS_I_BIG_IDEAS.map((idea) => (
+                      <div key={idea.name} style={styles.bigIdea}>
+                        <strong>{idea.name}</strong>
+                        <span style={styles.bigIdeaFormula}>{idea.formula}</span>
+                        <span>{idea.text}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
               </section>
 
               <section style={{ ...styles.sec, ...styles.sec3 }}>
@@ -1431,6 +1526,7 @@ export default function CalculusLab() {
         <span style={styles.footerDot}>·</span>
         <span>{new Date().getFullYear()}</span>
       </footer>
+      </>}
       </main>
     </div>
   );
@@ -1522,6 +1618,265 @@ function StatRow({ stats }) {
   );
 }
 
+function FlashcardsScreen() {
+  const [category, setCategory] = useState("All");
+  const [cardIndex, setCardIndex] = useState(0);
+  const [flipped, setFlipped] = useState(false);
+  const categories = ["All", "Foundations", "Limits", "Derivatives", "Integrals", "Algebra", "Applications"];
+  const cards = category === "All" ? FLASHCARDS : FLASHCARDS.filter((card) => card.category === category);
+  const card = cards[cardIndex % cards.length];
+  const move = (step) => { setCardIndex((index) => (index + step + cards.length) % cards.length); setFlipped(false); };
+  const changeCategory = (next) => { setCategory(next); setCardIndex(0); setFlipped(false); };
+
+  return (
+    <section style={styles.flashcards} aria-labelledby="flashcards-title">
+      <div className="flashIntro" style={styles.flashIntro}>
+        <div>
+          <div style={styles.homeKicker}>CALCULUS I · QUICK REVIEW</div>
+          <h1 id="flashcards-title" style={styles.flashTitle}>Build the connections.</h1>
+          <p style={styles.homeLead}>Recall the idea first. Flip the card when you are ready, then explain it in your own words.</p>
+        </div>
+        <div style={styles.flashCount}>{String(cardIndex + 1).padStart(2, "0")} <span style={styles.flashCountSub}>/ {cards.length}</span></div>
+      </div>
+      <div style={styles.flashToolbar}>
+        <div style={styles.flashFilters} aria-label="Flashcard topics">
+          {categories.map((item) => <button key={item} className="cl-chip" onClick={() => changeCategory(item)} style={{ ...styles.chip, ...(category === item ? styles.chipActive : {}) }}>{item}</button>)}
+        </div>
+        <span style={styles.flashHint}>Tap the card to reveal the answer</span>
+      </div>
+      <button className="cl-btn flashCardButton" onClick={() => setFlipped((value) => !value)} style={styles.flashCard} aria-label={flipped ? "Show question" : "Show answer"}>
+        <span style={styles.flashCardTop}><span style={styles.flashCategory}>{card.category}</span><span style={styles.flashFlip}>{flipped ? "QUESTION" : "ANSWER"}</span></span>
+        <span style={styles.flashCardLabel}>{flipped ? "Answer" : "Question"}</span>
+        <span style={flipped ? styles.flashAnswer : styles.flashQuestion}>{flipped ? card.answer : card.prompt}</span>
+        <span style={styles.flashFormula}>{card.formula}</span>
+      </button>
+      <div style={styles.flashControls}>
+        <button className="cl-btn" onClick={() => move(-1)} style={styles.flashNav}>← Previous</button>
+        <button className="cl-btn" onClick={() => setFlipped((value) => !value)} style={styles.flashReveal}>{flipped ? "Show question" : "Reveal answer"}</button>
+        <button className="cl-btn" onClick={() => move(1)} style={styles.flashNav}>Next →</button>
+      </div>
+      <div style={styles.flashTip}><strong>Study move</strong><span>Before flipping, say the definition, sketch the idea, or name the rule you would use.</span></div>
+    </section>
+  );
+}
+
+function LimitScreen() {
+  const [selected, setSelected] = useState(0);
+  const [approach, setApproach] = useState(0.62);
+  const [direction, setDirection] = useState("both");
+  const [limitView, setLimitView] = useState("graph");
+  const preset = LIMIT_PRESETS[selected];
+  const [xMin, xMax] = preset.domain;
+  const isInfinity = preset.kind === "infinity";
+  const distance = Math.max(0.01, (xMax - xMin) * (0.18 - approach * 0.175));
+  const leftX = preset.at - distance;
+  const rightX = preset.at + distance;
+  const x = isInfinity ? xMin + (xMax - xMin) * (0.12 + approach * 0.84) : direction === "right" ? rightX : leftX;
+  const evaluate = (value) => {
+    try {
+      if (preset.kind === "jump") return value < 0 ? -1 : 1;
+      if (preset.kind === "hole") return value === 1 ? NaN : value + 1;
+      if (preset.kind === "infinite") return 1 / (value * value);
+      if (preset.kind === "squeeze") return value === 0 ? NaN : value * value * Math.sin(1 / value);
+      if (preset.kind === "direct") return value * value + 3 * value - 1;
+      if (preset.kind === "rationalize") return value === 0 ? NaN : (Math.sqrt(value + 4) - 2) / value;
+      if (preset.kind === "infinity") return (2 * value * value + 1) / (value * value - 3);
+      return Math.sin(value) / value;
+    } catch { return NaN; }
+  };
+
+  const yAtX = evaluate(x);
+  const yAtLeft = evaluate(leftX);
+  const yAtRight = evaluate(rightX);
+  const W = 720, H = 330, pad = { l: 52, r: 24, t: 24, b: 42 };
+  const isSqueeze = preset.kind === "squeeze";
+  const yMin = preset.kind === "infinite" ? -1 : preset.kind === "jump" ? -2 : isSqueeze ? -0.12 : preset.kind === "infinity" ? 0.5 : -1.5;
+  const yMax = preset.kind === "infinite" ? 14 : preset.kind === "jump" ? 2 : isSqueeze ? 0.12 : preset.kind === "infinity" ? 3.5 : 2.5;
+  const xToPx = (value) => pad.l + ((value - xMin) / (xMax - xMin)) * (W - pad.l - pad.r);
+  const yToPx = (value) => H - pad.b - ((value - yMin) / (yMax - yMin)) * (H - pad.t - pad.b);
+  const points = [];
+  const pointCount = isSqueeze ? 1600 : 360;
+  for (let i = 0; i <= pointCount; i += 1) {
+    const value = xMin + (i / pointCount) * (xMax - xMin);
+    const y = evaluate(value);
+    const nearTarget = Math.abs(value - preset.at) < (xMax - xMin) / pointCount * 1.5;
+    points.push(Number.isFinite(y) && Math.abs(y) < yMax * 0.9 && !nearTarget ? [xToPx(value), yToPx(y)] : null);
+  }
+  const path = points.map((point, i) => point ? `${i && points[i - 1] ? "L" : "M"} ${point[0].toFixed(2)} ${point[1].toFixed(2)}` : "").join(" ");
+  const boundPoints = (bound, reverse = false) => {
+    const boundPoints = [];
+    for (let i = reverse ? pointCount : 0; reverse ? i >= 0 : i <= pointCount; i += reverse ? -1 : 1) {
+      const value = xMin + (i / pointCount) * (xMax - xMin);
+      boundPoints.push([xToPx(value), yToPx(bound(value))]);
+    }
+    return boundPoints;
+  };
+  const lowerBoundPoints = isSqueeze ? boundPoints((value) => -value * value) : [];
+  const upperBoundPoints = isSqueeze ? boundPoints((value) => value * value) : [];
+  const toPath = (pathPoints) => pathPoints.map(([px, py], i) => `${i ? "L" : "M"} ${px.toFixed(2)} ${py.toFixed(2)}`).join(" ");
+  const lowerBoundPath = toPath(lowerBoundPoints);
+  const upperBoundPath = toPath(upperBoundPoints);
+  const axisForward = upperBoundPoints.map(([px]) => [px, yToPx(0)]);
+  const upperSqueezeFill = toPath([...upperBoundPoints, ...axisForward.slice().reverse()]) + " Z";
+  const lowerSqueezeFill = toPath([...axisForward, ...lowerBoundPoints.slice().reverse()]) + " Z";
+  const leftRight = direction === "both" ? "both sides" : `${direction}-hand side`;
+  const distances = [0.5, 0.1, 0.01, 0.001];
+  const tableRows = distances.map((delta) => ({ delta, left: evaluate(preset.at - delta), right: evaluate(preset.at + delta) }));
+  const algebra = preset.kind === "hole" ? "Factor: (x² − 1)/(x − 1) = (x − 1)(x + 1)/(x − 1), so the nearby behavior is x + 1 → 2." : preset.kind === "jump" ? "The left side approaches −1, while the right side approaches 1. Because they disagree, the two-sided limit does not exist." : preset.kind === "infinite" ? "As x gets close to 0, x² gets close to 0, so 1/x² grows without bound. The line x = 0 is a vertical asymptote." : isSqueeze ? "Since −x² ≤ x²·sin(1/x) ≤ x² and both outer functions approach 0, the Squeeze Theorem gives a limit of 0." : preset.kind === "direct" ? "Substitute x = 2: 2² + 3(2) − 1 = 9. Because the result is an ordinary number, the limit is 9." : preset.kind === "rationalize" ? "Multiply by the conjugate to turn the 0/0 form into 1/(√(x+4)+2), which approaches 1/4." : preset.kind === "infinity" ? "Divide numerator and denominator by x². The lower-degree terms fade away, leaving 2/1 = 2." : "This is a special trig limit: the graph and table show sin(x)/x approaching 1 from both sides.";
+  return (
+    <section style={styles.limitScreen} aria-labelledby="limit-title">
+      <div className="limitIntro" style={styles.limitIntro}>
+        <div>
+          <div style={styles.homeKicker}>CALCULUS I · LIMITS</div>
+          <h1 id="limit-title" style={styles.limitTitle}>What does f(x) approach?</h1>
+          <p style={styles.homeLead}>Move x close to a and watch the function's output settle, jump, or grow without bound.</p>
+        </div>
+        <div style={styles.limitNotation}>x → a<br /><span style={styles.limitNotationSub}>means “near, not equal”</span></div>
+      </div>
+      <div style={styles.limitPresetRow}>
+        {LIMIT_PRESETS.map((item, index) => (
+          <button key={item.label} className="cl-chip" onClick={() => { setSelected(index); setApproach(0.62); }} style={{ ...styles.chip, ...(selected === index ? styles.chipActive : {}) }}>
+            {item.name}
+          </button>
+        ))}
+      </div>
+      <div style={styles.limitToolbar}>
+        <div style={styles.limitViews}>
+          {[['graph', 'Graph'], ['table', 'Table'], ['algebra', 'Algebra']].map(([key, label]) => (
+            <button key={key} className="cl-tab" onClick={() => setLimitView(key)} style={{ ...styles.limitViewButton, ...(limitView === key ? styles.limitViewActive : {}) }}>{label}</button>
+          ))}
+        </div>
+        <div style={styles.directionGroup}>
+          <span style={styles.directionLabel}>Approach from</span>
+          {[['left', 'left'], ['both', 'both'], ['right', 'right']].map(([key, label]) => (
+            <button key={key} className="cl-chip" onClick={() => setDirection(key)} style={{ ...styles.directionButton, ...(direction === key ? styles.chipActive : {}) }}>{label}</button>
+          ))}
+        </div>
+      </div>
+      <div className="limitLayout" style={styles.limitLayout}>
+        <div style={styles.limitPlotFrame}>
+          <div style={styles.plotTitle}><b style={styles.plotTitleWord}>{preset.name}</b> · {preset.expr}{isSqueeze && <div style={styles.squeezeLegend}><span style={{ color: COLORS.mint }}>— x² upper bound</span><span style={{ color: COLORS.coral }}>— middle function</span><span style={{ color: COLORS.rose }}>— −x² lower bound</span></div>}</div>
+          {limitView === "graph" && <svg viewBox={`0 0 ${W} ${H}`} style={styles.svg} role="img" aria-label={`Graph of ${preset.expr} as x approaches ${preset.at}`}>
+            <line x1={pad.l} x2={W - pad.r} y1={yToPx(0)} y2={yToPx(0)} stroke={COLORS.gridStrong} />
+            <line x1={xToPx(0)} x2={xToPx(0)} y1={pad.t} y2={H - pad.b} stroke={COLORS.gridStrong} />
+            {isSqueeze && <>
+              <path d={upperSqueezeFill} fill="#FFF4D9" opacity="0.62" stroke="none" />
+              <path d={lowerSqueezeFill} fill="#FFF4D9" opacity="0.62" stroke="none" />
+              <path d={lowerBoundPath} stroke={COLORS.rose} strokeWidth="2" fill="none" strokeDasharray="5 4" />
+              <path d={upperBoundPath} stroke={COLORS.mint} strokeWidth="2" fill="none" strokeDasharray="5 4" />
+              <text x={xToPx(-0.27)} y={yToPx(-0.27 * 0.27) + 15} fill={COLORS.rose} fontSize="11" fontFamily="IBM Plex Mono, monospace">−x²</text>
+              <text x={xToPx(-0.27)} y={yToPx(0.27 * 0.27) - 6} fill={COLORS.mint} fontSize="11" fontFamily="IBM Plex Mono, monospace">x²</text>
+            </>}
+            <path d={path} stroke={isSqueeze ? COLORS.coral : COLORS.curve} strokeWidth={isSqueeze ? "3" : "2.5"} fill="none" strokeLinecap="round" />
+            {!isInfinity && <line x1={xToPx(preset.at)} x2={xToPx(preset.at)} y1={pad.t} y2={H - pad.b} stroke={COLORS.violet} strokeDasharray="4 5" opacity="0.4" />}
+            {isInfinity ? (
+              <><line x1={pad.l} x2={W - pad.r} y1={yToPx(2)} y2={yToPx(2)} stroke={COLORS.violet} strokeDasharray="5 4" opacity="0.7" /><text x={W - pad.r - 6} y={yToPx(2) - 8} textAnchor="end" fill={COLORS.violet} fontSize="11" fontWeight="700" fontFamily="IBM Plex Mono, monospace">horizontal asymptote y = 2</text></>
+            ) : preset.kind === "infinite" ? (
+              <text x={xToPx(preset.at) + 8} y={pad.t + 14} fill={COLORS.violet} fontSize="11" fontWeight="700" fontFamily="IBM Plex Mono, monospace">vertical asymptote</text>
+            ) : (
+              <circle cx={xToPx(preset.at)} cy={yToPx(Number(preset.limit) || 0)} r="6" fill={COLORS.card} stroke={COLORS.coral} strokeWidth="2.5" />
+            )}
+            {direction === "both" ? (
+              <>
+                {Number.isFinite(yAtLeft) && <><line x1={xToPx(leftX)} x2={xToPx(leftX)} y1={yToPx(0)} y2={yToPx(yAtLeft)} stroke={COLORS.coral} strokeDasharray="3 3" /><circle cx={xToPx(leftX)} cy={yToPx(yAtLeft)} r="6" fill={COLORS.coral} stroke="#fff" strokeWidth="2" /></>}
+                {Number.isFinite(yAtRight) && <><line x1={xToPx(rightX)} x2={xToPx(rightX)} y1={yToPx(0)} y2={yToPx(yAtRight)} stroke={COLORS.gold} strokeDasharray="3 3" /><circle cx={xToPx(rightX)} cy={yToPx(yAtRight)} r="6" fill={COLORS.gold} stroke="#fff" strokeWidth="2" /></>}
+              </>
+            ) : Number.isFinite(yAtX) && <><line x1={xToPx(x)} x2={xToPx(x)} y1={yToPx(0)} y2={yToPx(yAtX)} stroke={COLORS.gold} strokeDasharray="3 3" /><circle cx={xToPx(x)} cy={yToPx(yAtX)} r="6" fill={COLORS.gold} stroke="#fff" strokeWidth="2" /></>}
+            <text x={isInfinity ? W - pad.r : xToPx(preset.at)} y={H - 12} textAnchor={isInfinity ? "end" : "middle"} fill={COLORS.violet} fontSize="11" fontFamily="IBM Plex Mono, monospace">{isInfinity ? "x → ∞" : `a = ${preset.at}`}</text>
+          </svg>}
+          {limitView === "table" && (
+            <div style={styles.limitTableWrap}>
+              <p style={styles.tableIntro}>Read down the columns: as the distance from <b>a</b> shrinks, do the left and right values settle on the same number?</p>
+              <table style={styles.limitTable}><thead><tr><th>|x − a|</th><th>x from left</th><th>x from right</th></tr></thead><tbody>{tableRows.map((row) => <tr key={row.delta}><td>{row.delta}</td><td>{Number.isFinite(row.left) ? row.left.toFixed(4) : "undefined"}</td><td>{Number.isFinite(row.right) ? row.right.toFixed(4) : "undefined"}</td></tr>)}</tbody></table>
+            </div>
+          )}
+          {limitView === "algebra" && <div style={styles.algebraView}><span style={styles.answerTag}>why this works</span><p>{algebra}</p><div style={styles.algebraRule}>{preset.kind === "hole" ? "0/0 after substitution → factor and cancel" : preset.kind === "jump" ? "left limit ≠ right limit → DNE" : isSqueeze ? "bounded between two limits → squeeze" : preset.kind === "infinite" ? "denominator → 0 → vertical asymptote" : preset.kind === "direct" ? "ordinary number after substitution → done" : preset.kind === "rationalize" ? "0/0 → multiply by the conjugate" : preset.kind === "infinity" ? "divide by the highest power of x" : "special trig limit → 1"}</div></div>}
+          <div style={styles.limitSliderLabel}><span>{direction === "both" ? `x = ${leftX.toFixed(3)} and ${rightX.toFixed(3)}` : `x = ${x.toFixed(3)}`}</span><span>approaching from the {leftRight}</span></div>
+          <input type="range" min="0" max="1" step="0.001" value={approach} onChange={(event) => setApproach(Number(event.target.value))} style={styles.slider} aria-label="Move x toward a" />
+        </div>
+        <aside style={styles.limitAnswer}>
+          <span style={styles.answerTag}>{isSqueeze ? "the theorem" : "read the graph"}</span>
+          <div style={styles.limitEquation}>lim <i>x→{preset.at}</i> f(x) = <strong>{preset.limit}</strong></div>
+          <p style={styles.limitNote}>{preset.note}</p>
+          {isSqueeze ? (
+            <div style={styles.squeezeProof}><strong>Follow the trap</strong><span style={styles.squeezeProofSpan}>−x² ≤ x²·sin(1/x) ≤ x²</span><span>Both outside curves approach 0.</span><b>So the middle curve must approach 0.</b></div>
+          ) : (
+            <div style={styles.limitCheck}><strong>Continuity check</strong><span>For continuity at a, the limit and the function value must agree.</span><span style={{ color: preset.value === preset.limit ? COLORS.mint : COLORS.coral, fontWeight: 700 }}>{preset.value === preset.limit ? "continuous here" : "not continuous here"}</span></div>
+          )}
+        </aside>
+      </div>
+      <div style={styles.limitBridge}><span style={styles.bridgeArrow}>→</span><span><strong>Next idea:</strong> when this same approach happens to a secant slope, it becomes the derivative. Open <b>Derivatives</b> to see that motion.</span></div>
+    </section>
+  );
+}
+
+function HomeScreen({ onOpenLab, onOpenLimits, onOpenFlashcards, onSelectPreset }) {
+  const starters = [
+    { title: "Read a limit", text: "Compare the graph and table as x approaches a.", mode: "limit", accent: COLORS.blue },
+    { title: "See a tangent line", text: "Watch the slope change as a point travels along x².", mode: "derivative", preset: PRESETS.find((p) => p.label === "x²") },
+    { title: "Build an area", text: "Turn rectangles into an exact integral for x².", mode: "integral", preset: PRESETS.find((p) => p.label === "x²") },
+    { title: "Review a key idea", text: "Practice the definitions, rules, and formulas that connect the topics.", mode: "flashcards" },
+  ];
+
+  return (
+    <section style={styles.home} aria-labelledby="home-title">
+      <div style={styles.homeIntro}>
+        <div>
+          <div style={styles.homeKicker}>YOUR VISUAL CALCULUS DESK</div>
+          <h1 id="home-title" style={styles.homeTitle}>Make calculus move.</h1>
+          <p style={styles.homeLead}>See derivatives as changing slope and integrals as accumulated area, one small step at a time.</p>
+        </div>
+        <div style={styles.homeFormula} aria-hidden="true"><span>f′(x)</span><b>↔</b><span>∫ f(x) dx</span></div>
+      </div>
+      <div style={styles.homeSectionHead}>
+        <h2 style={styles.homeHeading}>Start with a guided experiment</h2>
+        <span style={styles.homeHint}>Pick a path, then press play</span>
+      </div>
+      <div style={styles.starterGrid}>
+        {starters.map((starter, index) => (
+          <button key={starter.title} className="cl-btn homeStarter" onClick={() => starter.mode === "limit" ? onOpenLimits() : starter.mode === "flashcards" ? onOpenFlashcards() : onSelectPreset(starter.preset, starter.mode)} style={styles.starterCard}>
+            <span style={styles.starterNumber}>{String(index + 1).padStart(2, "0")}</span>
+            <span style={styles.starterTitle}>{starter.title}</span>
+            <span style={styles.starterText}>{starter.text}</span>
+            <span style={styles.starterAction}>Open {starter.mode === "limit" ? "limits" : starter.mode === "flashcards" ? "flashcards" : starter.mode} <span aria-hidden="true">→</span></span>
+          </button>
+        ))}
+      </div>
+      <div style={styles.homeLowerGrid}>
+        <div style={styles.homeBand}>
+          <div style={styles.bandNumber}>01</div>
+          <div><h2 style={styles.homeHeading}>Limits</h2><p style={styles.homeBody}>Read what a function approaches, then connect that motion to the derivative.</p></div>
+          <button className="cl-btn" onClick={onOpenLimits} style={{ ...styles.textButton, color: COLORS.blue }}>Explore limits →</button>
+        </div>
+        <div style={styles.homeBand}>
+          <div style={styles.bandNumber}>02</div>
+          <div><h2 style={styles.homeHeading}>Derivatives</h2><p style={styles.homeBody}>Follow the tangent, secant, and difference quotient until the idea clicks.</p></div>
+          <button className="cl-btn" onClick={() => onOpenLab("derivative")} style={styles.textButton}>Explore slopes →</button>
+        </div>
+        <div style={styles.homeBand}>
+          <div style={{ ...styles.bandNumber, color: COLORS.mint }}>03</div>
+          <div><h2 style={styles.homeHeading}>Integrals</h2><p style={styles.homeBody}>Refine the rectangles and watch an estimate become accumulated area.</p></div>
+          <button className="cl-btn" onClick={() => onOpenLab("integral")} style={{ ...styles.textButton, color: COLORS.mint }}>Explore area →</button>
+        </div>
+      </div>
+      <div style={styles.homeRoadmap}>
+        <div style={styles.homeSectionHead}>
+          <h2 style={styles.homeHeading}>The Calculus I path</h2>
+          <span style={styles.homeHint}>Concept first, computation second</span>
+        </div>
+        <div style={styles.roadmapGrid}>
+          {["Limits & continuity", "Derivatives", "Applications", "Integrals & FTC"].map((step, index) => (
+            <div key={step} style={styles.roadmapStep}>
+              <span style={styles.roadmapNumber}>{String(index + 1).padStart(2, "0")}</span>
+              <span style={styles.roadmapLabel}>{step}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
 const styles = {
   app: {
     fontFamily: "'Inter', system-ui, sans-serif",
@@ -1530,6 +1885,87 @@ const styles = {
     minHeight: "100vh",
     textAlign: "left",
   },
+  home: { paddingTop: 18 },
+  homeIntro: { display: "flex", justifyContent: "space-between", gap: 32, alignItems: "flex-end", padding: "38px 0 42px", borderBottom: `1px solid ${COLORS.border}` },
+  homeKicker: { fontFamily: "'IBM Plex Mono', monospace", fontSize: 11, letterSpacing: "0.12em", color: COLORS.coral, fontWeight: 600, marginBottom: 10 },
+  homeTitle: { fontFamily: "'Poppins', sans-serif", fontSize: 42, lineHeight: 1.1, margin: 0, color: COLORS.ink },
+  homeLead: { maxWidth: 560, marginTop: 12, fontSize: 16, lineHeight: 1.6, color: COLORS.inkDim },
+  homeFormula: { display: "flex", gap: 16, alignItems: "center", color: COLORS.violet, fontFamily: "'IBM Plex Mono', monospace", fontSize: 21, whiteSpace: "nowrap" },
+  homeSectionHead: { display: "flex", justifyContent: "space-between", alignItems: "baseline", gap: 16, margin: "28px 0 12px" },
+  homeHeading: { fontFamily: "'Poppins', sans-serif", fontSize: 16, fontWeight: 700, margin: 0, color: COLORS.ink },
+  homeHint: { fontSize: 12, color: COLORS.inkDim },
+  starterGrid: { display: "grid", gridTemplateColumns: "repeat(4, minmax(0, 1fr))", gap: 12 },
+  starterCard: { display: "flex", flexDirection: "column", alignItems: "flex-start", gap: 9, minHeight: 166, textAlign: "left", background: COLORS.card, border: `1px solid ${COLORS.border}`, borderRadius: 14, padding: 18, boxShadow: COLORS.cardShadow, cursor: "pointer" },
+  starterNumber: { color: COLORS.blue, fontFamily: "'IBM Plex Mono', monospace", fontSize: 12, fontWeight: 700, letterSpacing: "0.04em" },
+  starterTitle: { fontFamily: "'Poppins', sans-serif", fontWeight: 700, fontSize: 15, color: COLORS.ink },
+  starterText: { fontSize: 13, lineHeight: 1.5, color: COLORS.inkDim },
+  starterAction: { marginTop: "auto", color: COLORS.violet, fontSize: 12, fontWeight: 700 },
+  homeLowerGrid: { display: "grid", gridTemplateColumns: "repeat(3, minmax(0, 1fr))", gap: 12, marginTop: 30 },
+  homeBand: { display: "grid", gridTemplateColumns: "38px 1fr", gap: 12, alignItems: "start", padding: "18px 0", borderTop: `2px solid ${COLORS.ink}` },
+  bandNumber: { fontFamily: "'IBM Plex Mono', monospace", fontSize: 12, fontWeight: 700, color: COLORS.coral },
+  homeBody: { fontSize: 13, lineHeight: 1.5, color: COLORS.inkDim, margin: "6px 0 12px" },
+  textButton: { gridColumn: "2", justifySelf: "start", border: "none", padding: 0, background: "transparent", color: COLORS.coral, fontWeight: 700, fontSize: 12, cursor: "pointer" },
+  limitScreen: { paddingTop: 18 },
+  flashcards: { paddingTop: 18, maxWidth: 900, margin: "0 auto" },
+  flashIntro: { display: "flex", justifyContent: "space-between", gap: 24, alignItems: "flex-end", padding: "32px 0 28px", borderBottom: `1px solid ${COLORS.border}` },
+  flashTitle: { fontFamily: "'Poppins', sans-serif", fontSize: 32, lineHeight: 1.15, margin: 0, color: COLORS.ink },
+  flashCount: { color: COLORS.violet, fontFamily: "'IBM Plex Mono', monospace", fontSize: 28, fontWeight: 600, whiteSpace: "nowrap" },
+  flashCountSub: { color: COLORS.inkDim, fontSize: 14, fontWeight: 400 },
+  flashToolbar: { display: "flex", justifyContent: "space-between", gap: 16, alignItems: "center", flexWrap: "wrap", margin: "20px 0 14px" },
+  flashFilters: { display: "flex", gap: 6, flexWrap: "wrap" },
+  flashHint: { color: COLORS.inkDim, fontSize: 12 },
+  flashCard: { display: "flex", flexDirection: "column", alignItems: "flex-start", justifyContent: "space-between", width: "100%", minHeight: 350, padding: "24px clamp(20px, 5vw, 52px)", background: COLORS.card, border: `1px solid ${COLORS.border}`, borderRadius: 16, boxShadow: "0 10px 28px rgba(18,58,94,0.1)", cursor: "pointer", textAlign: "left" },
+  flashCardTop: { display: "flex", justifyContent: "space-between", width: "100%", gap: 12, alignItems: "center" },
+  flashCategory: { color: COLORS.coral, fontFamily: "'IBM Plex Mono', monospace", fontSize: 11, fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase" },
+  flashFlip: { color: COLORS.inkDim, fontFamily: "'IBM Plex Mono', monospace", fontSize: 10, letterSpacing: "0.08em" },
+  flashCardLabel: { color: COLORS.violet, fontFamily: "'Poppins', sans-serif", fontSize: 13, fontWeight: 700 },
+  flashQuestion: { color: COLORS.ink, fontFamily: "'Poppins', sans-serif", fontSize: 25, lineHeight: 1.35, maxWidth: 720 },
+  flashAnswer: { color: COLORS.ink, fontSize: 17, lineHeight: 1.65, maxWidth: 720 },
+  flashFormula: { color: COLORS.curve, fontFamily: "'IBM Plex Mono', monospace", fontSize: 14, fontWeight: 600, paddingTop: 16, borderTop: `1px solid ${COLORS.border}`, width: "100%" },
+  flashControls: { display: "flex", justifyContent: "space-between", alignItems: "center", gap: 10, marginTop: 14, width: "100%" },
+  flashNav: { background: "transparent", border: "none", color: COLORS.violet, padding: "8px 0", fontFamily: "'Poppins', sans-serif", fontSize: 12, fontWeight: 700, cursor: "pointer" },
+  flashReveal: { background: COLORS.violet, color: "#fff", border: "none", borderRadius: 10, padding: "10px 16px", fontFamily: "'Poppins', sans-serif", fontSize: 12, fontWeight: 700, cursor: "pointer", boxShadow: "0 4px 12px rgba(24,99,176,0.25)" },
+  flashTip: { display: "flex", gap: 10, alignItems: "baseline", marginTop: 22, paddingTop: 14, borderTop: `1px solid ${COLORS.border}`, color: COLORS.inkDim, fontSize: 12, lineHeight: 1.5 },
+  limitIntro: { display: "flex", justifyContent: "space-between", gap: 32, alignItems: "flex-end", padding: "32px 0 28px", borderBottom: `1px solid ${COLORS.border}` },
+  limitTitle: { fontFamily: "'Poppins', sans-serif", fontSize: 30, lineHeight: 1.15, margin: 0, color: COLORS.ink },
+  squeezeLegend: { display: "flex", flexWrap: "wrap", gap: "4px 14px", color: COLORS.inkDim, fontFamily: "'Inter', sans-serif", fontSize: 11, fontWeight: 600, marginTop: 6 },
+  limitNotation: { color: COLORS.violet, fontFamily: "'IBM Plex Mono', monospace", fontSize: 22, textAlign: "right", lineHeight: 1.4, whiteSpace: "nowrap" },
+  limitNotationSub: { color: COLORS.inkDim, fontFamily: "'Inter', sans-serif", fontSize: 11 },
+  limitPresetRow: { display: "flex", gap: 7, flexWrap: "wrap", margin: "18px 0 14px" },
+  limitToolbar: { display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12, flexWrap: "wrap", marginBottom: 12 },
+  limitViews: { display: "flex", gap: 3, padding: 3, background: COLORS.chipBg, border: `1px solid ${COLORS.border}`, borderRadius: 9 },
+  limitViewButton: { border: "none", background: "transparent", color: COLORS.inkDim, fontFamily: "'Inter', sans-serif", fontWeight: 600, fontSize: 11.5, padding: "6px 12px", borderRadius: 7, cursor: "pointer" },
+  limitViewActive: { background: COLORS.card, color: COLORS.violet, boxShadow: "0 1px 3px rgba(18,58,94,0.12)" },
+  directionGroup: { display: "flex", alignItems: "center", gap: 5, flexWrap: "wrap" },
+  directionLabel: { color: COLORS.inkDim, fontSize: 11.5, marginRight: 2 },
+  directionButton: { padding: "5px 9px", fontSize: 11, borderRadius: 7 },
+  limitLayout: { display: "grid", gridTemplateColumns: "minmax(0, 1.65fr) minmax(260px, 0.75fr)", gap: 14, alignItems: "stretch" },
+  limitPlotFrame: { background: COLORS.card, border: `1px solid ${COLORS.border}`, borderRadius: 16, padding: "12px 12px 14px", boxShadow: COLORS.cardShadow, overflow: "hidden" },
+  limitSliderLabel: { display: "flex", justifyContent: "space-between", alignItems: "baseline", gap: 12, color: COLORS.inkDim, fontFamily: "'IBM Plex Mono', monospace", fontSize: 11, margin: "6px 2px 8px", flexWrap: "wrap" },
+  limitTableWrap: { minHeight: 330, padding: "18px 8px" },
+  tableIntro: { color: COLORS.inkDim, fontSize: 13, lineHeight: 1.5, margin: "0 0 18px" },
+  limitTable: { width: "100%", borderCollapse: "collapse", color: COLORS.ink, fontFamily: "'IBM Plex Mono', monospace", fontSize: 12 },
+  algebraView: { minHeight: 330, padding: "28px 18px", color: COLORS.ink, fontSize: 14, lineHeight: 1.65 },
+  algebraRule: { marginTop: 20, padding: "10px 12px", background: COLORS.chipBg, border: `1px solid ${COLORS.border}`, borderRadius: 8, color: COLORS.violet, fontFamily: "'IBM Plex Mono', monospace", fontSize: 12 },
+  limitAnswer: { background: "#EEF3FF", border: `1px solid ${COLORS.blue}`, borderRadius: 16, padding: 18, display: "flex", flexDirection: "column", gap: 13 },
+  limitEquation: { color: COLORS.ink, fontFamily: "'IBM Plex Mono', monospace", fontSize: 19, lineHeight: 1.5 },
+  limitNote: { color: COLORS.ink, fontSize: 13, lineHeight: 1.55, margin: 0 },
+  limitCheck: { borderTop: `1px solid ${COLORS.blue}`, paddingTop: 12, display: "flex", flexDirection: "column", gap: 5, color: COLORS.inkDim, fontSize: 12, lineHeight: 1.45 },
+  squeezeProof: { borderTop: `1px solid ${COLORS.blue}`, paddingTop: 14, display: "flex", flexDirection: "column", gap: 7, color: COLORS.inkDim, fontSize: 12, lineHeight: 1.45 },
+  squeezeProofSpan: { fontFamily: "'IBM Plex Mono', monospace", color: COLORS.curve },
+  limitBridge: { display: "flex", gap: 9, alignItems: "flex-start", marginTop: 14, background: "#FFF8EC", border: `1px solid ${COLORS.gold}`, borderRadius: 12, padding: "11px 13px", color: COLORS.ink, fontSize: 12.5, lineHeight: 1.5 },
+  homeRoadmap: { marginTop: 22, paddingTop: 4 },
+  roadmapGrid: { display: "grid", gridTemplateColumns: "repeat(4, minmax(0, 1fr))", gap: 8 },
+  roadmapStep: { display: "flex", flexDirection: "column", gap: 8, borderTop: `1px solid ${COLORS.border}`, paddingTop: 10 },
+  roadmapNumber: { color: COLORS.violet, fontFamily: "'IBM Plex Mono', monospace", fontSize: 11, fontWeight: 700 },
+  roadmapLabel: { color: COLORS.ink, fontFamily: "'Poppins', sans-serif", fontSize: 12, fontWeight: 600 },
+  bigIdeas: { marginTop: 12, padding: "11px 12px 12px", background: "#EEF3FF", border: `1px solid ${COLORS.blue}`, borderRadius: 12 },
+  bigIdeasHead: { display: "flex", justifyContent: "space-between", gap: 8, alignItems: "baseline", marginBottom: 9 },
+  bigIdeasTag: { color: COLORS.blue, fontFamily: "'IBM Plex Mono', monospace", fontSize: 10, fontWeight: 700, letterSpacing: "0.05em" },
+  bigIdeasHint: { color: COLORS.inkDim, fontSize: 10 },
+  bigIdeasGrid: { display: "grid", gridTemplateColumns: "repeat(2, minmax(0, 1fr))", gap: 8 },
+  bigIdea: { display: "flex", flexDirection: "column", gap: 3, color: COLORS.ink, fontSize: 10.5, lineHeight: 1.4 },
+  bigIdeaFormula: { color: COLORS.curve, fontFamily: "'IBM Plex Mono', monospace", fontSize: 10.5, fontWeight: 600 },
   topbar: {
     background: COLORS.card,
     borderBottom: `1px solid ${COLORS.border}`,
